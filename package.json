@@ -1,0 +1,35 @@
+{
+  "name": "personal-context-router",
+  "version": "1.0.0",
+  "description": "A microservices monorepo for personal context routing",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "dev": "concurrently \"npm run dev --workspace=@personal-context-router/preference-service\" \"npm run dev --workspace=@personal-context-router/gateway\"",
+    "dev:gateway": "npm run dev --workspace=@personal-context-router/gateway",
+    "dev:preference": "npm run dev --workspace=@personal-context-router/preference-service",
+    "start": "npm run start --workspaces --parallel",
+    "clean": "rm -rf node_modules packages/*/node_modules packages/*/dist"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^10.0.0",
+    "@nestjs/schematics": "^10.0.0",
+    "@nestjs/testing": "^10.0.0",
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.0.0",
+    "tsconfig-paths": "^4.0.0",
+    "concurrently": "^8.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

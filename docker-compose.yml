@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: packages/gateway/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+      - PREFERENCE_SERVICE_URL=http://preference-service:3001
+    depends_on:
+      - preference-service
+    volumes:
+      - ./packages/gateway:/app/packages/gateway
+      - ./packages/shared:/app/packages/shared
+    command: npm run dev --workspace=@personal-context-router/gateway
+
+  preference-service:
+    build:
+      context: .
+      dockerfile: packages/preference-service/Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - NODE_ENV=development
+    volumes:
+      - ./packages/preference-service:/app/packages/preference-service
+      - ./packages/shared:/app/packages/shared
+    command: npm run dev --workspace=@personal-context-router/preference-service
+
+networks:
+  default:
+    name: personal-context-router
