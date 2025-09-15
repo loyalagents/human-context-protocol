@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEnum, IsOptional, IsUUID } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum, IsOptional, IsUUID, IsDefined } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export enum PreferenceType {
@@ -18,6 +18,7 @@ export class CreatePreferenceDto {
   @IsNotEmpty()
   key!: string;
 
+  @IsDefined()
   value: any;
 
   @IsEnum(PreferenceType)
@@ -25,6 +26,7 @@ export class CreatePreferenceDto {
 }
 
 export class UpdatePreferenceDto {
+  @IsDefined()
   value: any;
 
   @IsEnum(PreferenceType)
