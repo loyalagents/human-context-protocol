@@ -14,11 +14,7 @@
     "moduleResolution": "node",
     "incremental": true,
     "skipLibCheck": true,
-    "strictNullChecks": false,
-    "noImplicitAny": false,
-    "strictBindCallApply": false,
-    "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false,
+    "strict": false,
     "paths": {
       "@personal-context-router/shared": [
         "../shared/dist",

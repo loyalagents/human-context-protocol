@@ -2,19 +2,11 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
-    "moduleResolution": "node",
-    "paths": {
-      "@personal-context-router/shared": [
-        "../shared/dist",
-        "../../node_modules/@personal-context-router/shared"
-      ],
-      "@personal-context-router/shared/*": [
-        "../shared/dist/*",
-        "../../node_modules/@personal-context-router/shared/*"
-      ]
-    }
+    "rootDir": "./src"
   },
   "include": ["src/**/*"],
-  "exclude": ["dist", "node_modules", "**/*.test.ts", "**/*.spec.ts"]
+  "exclude": ["dist", "node_modules", "**/*.test.ts", "**/*.spec.ts"],
+  "references": [
+    { "path": "../shared" }
+  ]
 }

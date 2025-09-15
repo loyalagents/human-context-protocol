@@ -8,7 +8,6 @@ yarn-error.log*
 dist/
 build/
 *.tsbuildinfo
-packages/*/tsconfig.tsbuildinfo
 packages/*/dist/
 
 # Generated JS/Maps/Declarations (keep src clean)

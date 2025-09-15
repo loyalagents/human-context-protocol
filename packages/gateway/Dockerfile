@@ -15,8 +15,9 @@ COPY packages/shared ./packages/shared
 COPY packages/gateway ./packages/gateway
 COPY tsconfig.json ./
 
-# Ensure shared is compiled fresh (avoid stale tsbuildinfo skipping emit)
-RUN npx tsc -b packages/shared/tsconfig.json --clean && npm run build --workspace=@personal-context-router/shared -- --force
+# Build shared package first
+RUN npx tsc -b packages/shared/tsconfig.json --clean && \
+    npm run build --workspace=@personal-context-router/shared -- --force
 
 # Build the gateway service directly with tsc (force clean then emit)
 RUN npx tsc -b packages/gateway/tsconfig.build.json --clean && npx tsc -b packages/gateway/tsconfig.build.json && \
