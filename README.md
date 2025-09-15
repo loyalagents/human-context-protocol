@@ -40,7 +40,7 @@ Note: in this default configuration, containers run compiled code (no live reloa
 
 If you prefer to run without Docker:
 
-1. **Prerequisites:** Node.js 18+, MongoDB running locally
+1. **Prerequisites:** Node.js 22+, MongoDB running locally
 2. **Install:** `npm install`  
 3. **Build:** `npm run build`
 4. **Run:** `npm run dev`
