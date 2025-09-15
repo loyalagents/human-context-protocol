@@ -6,6 +6,7 @@ import * as dotenv from 'dotenv';
 
 import { GatewayClientService } from './services/gateway-client.service';
 import { PreferenceTools } from './tools/preference.tools';
+import { GitHubTools } from './tools/github.tools';
 
 // Load environment variables
 dotenv.config();
@@ -14,6 +15,7 @@ class MCPHttpServer {
   private app: express.Application;
   private gatewayClient: GatewayClientService;
   private preferenceTools: PreferenceTools;
+  private githubTools: GitHubTools;
   private port: number;
 
   constructor() {
@@ -22,6 +24,7 @@ class MCPHttpServer {
 
     this.gatewayClient = new GatewayClientService();
     this.preferenceTools = new PreferenceTools(this.gatewayClient);
+    this.githubTools = new GitHubTools(this.gatewayClient);
 
     this.setupMiddleware();
     this.setupRoutes();
@@ -70,7 +73,10 @@ class MCPHttpServer {
               jsonrpc: '2.0',
               id: jsonRpcRequest.id,
               result: {
-                tools: this.preferenceTools.getTools()
+                tools: [
+                  ...this.preferenceTools.getTools(),
+                  ...this.githubTools.getTools()
+                ]
               }
             };
             break;
@@ -79,7 +85,14 @@ class MCPHttpServer {
             const { name, arguments: args } = jsonRpcRequest.params;
 
             try {
-              const result = await this.preferenceTools.handleToolCall(name, args);
+              let result;
+
+              // Route to appropriate tool handler based on tool name
+              if (name.startsWith('get_github_') || name.startsWith('get_user_repos')) {
+                result = await this.githubTools.handleToolCall(name, args);
+              } else {
+                result = await this.preferenceTools.handleToolCall(name, args);
+              }
               response = {
                 jsonrpc: '2.0',
                 id: jsonRpcRequest.id,

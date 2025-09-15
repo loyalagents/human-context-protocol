@@ -141,12 +141,18 @@ To use the MCP service with Claude Desktop:
 3. **Restart Claude Desktop** - The MCP server will be available automatically
 
 4. **Available MCP Tools**:
+
+   **Preference Tools:**
    - `get_user_preferences(userId)` - Get all preferences for a user
    - `get_preference(userId, key)` - Get specific preference
    - `set_preference(userId, key, value, type)` - Create/update preference
    - `update_preference(userId, key, value)` - Update existing preference
    - `delete_preference(userId, key)` - Delete preference
    - `list_preference_keys(userId)` - List all preference keys
+
+   **GitHub Tools:**
+   - `get_github_repo(owner, repo)` - Get detailed information about a specific GitHub repository
+   - `get_user_repos(username)` - Get all repositories for a GitHub user or organization
 
 **Version Note**: Using `mcp-remote@0.1.18` for consistent behavior across team members. To upgrade: update version in `claude-desktop-config-example.json` and test thoroughly.
 

@@ -72,4 +72,15 @@ export class GatewayClientService {
     const response = await this.client.get<{ status: string }>('/health');
     return response.data;
   }
+
+  // GitHub API methods
+  async getGitHubRepo(owner: string, repo: string): Promise<any> {
+    const response = await this.client.get(`/api/github/repo/${owner}/${repo}`);
+    return response.data;
+  }
+
+  async getUserRepos(username: string): Promise<any[]> {
+    const response = await this.client.get<any[]>(`/api/github/user/${username}/repos`);
+    return response.data;
+  }
 }
