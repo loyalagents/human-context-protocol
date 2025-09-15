@@ -118,6 +118,31 @@ To use the MCP service with Claude Desktop:
 
 **Version Note**: Using `mcp-remote@0.1.18` for consistent behavior across team members. To upgrade: update version in `claude-desktop-config-example.json` and test thoroughly.
 
+### MCP Architecture Evolution
+
+**Phase 1 (Current): Local Development**
+```
+Claude Desktop → mcp-remote → localhost:3003/mcp → MCP Service → Gateway
+```
+- ✅ Working local setup for development and testing
+- ✅ Simple to debug with direct MCP service access
+- ✅ Secure for localhost-only usage
+
+**Phase 2 (Future): Internet Deployment**
+```
+Internet → Claude → mcp-remote → your-domain.com/mcp → Gateway → MCP Service (internal)
+```
+
+When internet access is needed, implement Phase 2:
+
+1. **Add `/mcp` endpoint to Gateway** - Proxy MCP JSON-RPC requests to internal MCP service
+2. **Make MCP service internal-only** - Remove port 3003 from external exposure
+3. **Update Claude configuration** - Point to `your-domain.com/mcp` instead of `localhost:3003`
+4. **Add authentication to Gateway** - Enforce API keys/JWT for MCP endpoint security
+5. **Apply rate limiting** - Use Gateway's existing throttling for MCP traffic
+
+This staged approach provides a working local system now while enabling secure internet deployment later.
+
 ## Development
 
 ### Commands
