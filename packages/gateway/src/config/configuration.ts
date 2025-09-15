@@ -7,6 +7,11 @@ export default () => ({
       port: parseInt(process.env.PREFERENCE_SERVICE_PORT || '3002', 10),
       timeout: 5000,
     },
+    github: {
+      host: process.env.GITHUB_SERVICE_HOST || 'localhost',
+      port: parseInt(process.env.GITHUB_SERVICE_PORT || '3004', 10),
+      timeout: 10000,
+    },
   },
   cors: {
     origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'],

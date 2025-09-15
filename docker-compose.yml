@@ -44,8 +44,11 @@ services:
       - NODE_ENV=development
       - PREFERENCE_SERVICE_HOST=preference-service
       - PREFERENCE_SERVICE_PORT=3002
+      - GITHUB_SERVICE_HOST=github-import-service
+      - GITHUB_SERVICE_PORT=3004
     depends_on:
       - preference-service
+      - github-import-service
 
   mcp-service:
     build:
@@ -63,6 +66,22 @@ services:
       - GATEWAY_URL=http://gateway:3000
     depends_on:
       - gateway
+
+  github-import-service:
+    build:
+      context: .
+      dockerfile: packages/github-import-service/Dockerfile
+    container_name: github-import-service
+    restart: unless-stopped
+    # No external port exposure - only accessible via gateway
+    # Run compiled code (production mode; no live reload)
+    command: npm run start:prod --workspace=@personal-context-router/github-import-service
+    environment:
+      - PORT=3004
+      - NODE_ENV=development
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+    depends_on:
+      - mongodb
 
 volumes:
   mongodb_data:

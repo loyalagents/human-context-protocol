@@ -25,8 +25,9 @@ async function bootstrap() {
     .setTitle('Personal Context Router Gateway')
     .setDescription('API Gateway for microservices')
     .setVersion('1.0')
-    .addTag('gateway')
-    .addTag('preferences')
+    .addTag('gateway', 'Gateway health and status endpoints')
+    .addTag('preferences', 'User preference management operations')
+    .addTag('github', 'GitHub repository and user data operations')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

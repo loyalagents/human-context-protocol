@@ -8,6 +8,7 @@ This monorepo contains multiple microservices built with NestJS:
 
 - **Gateway Service** (`packages/gateway`): NestJS API Gateway with built-in rate limiting, validation, and microservice communication
 - **Preference Service** (`packages/preference-service`): NestJS microservice for managing user preferences (HTTP + TCP transport)
+- **GitHub Import Service** (`packages/github-import-service`): NestJS service for importing GitHub repository data and user information
 - **MCP Service** (`packages/mcp-service`): Model Context Protocol server for Claude integration, exposing preference management tools
 - **Shared Package** (`packages/shared`): Common DTOs, interfaces, decorators, and validation schemas
 
@@ -34,10 +35,12 @@ That's it! This will:
 Note: in this default configuration, containers run compiled code (no live reload). See "Live Reload Options" below if you want auto-rebuild on file changes.
 
 **Services will be available at:**
-- Gateway: http://localhost:3000
-- Preference Service: http://localhost:3001
+- Gateway: http://localhost:3000 (entry point for all API calls)
+- Preference Service: http://localhost:3001 (direct access for development)
 - MCP Service: http://localhost:3003/mcp (HTTP bridge for Claude integration)
 - MongoDB: localhost:27017
+
+**Note**: GitHub Import Service is only accessible via the Gateway at `/api/github/*` routes for consistent architecture.
 
 ### Local Development (Alternative)
 
@@ -52,10 +55,11 @@ Changes you make to code on your host are picked up immediately in this local (n
 
 ### Services
 
-**Gateway Service**: `http://localhost:3000`
+**Gateway Service**: `http://localhost:3000` (Main API Entry Point)
 - Health check: `GET /health`
-- Swagger docs: `GET /api/docs`  
+- Swagger docs: `GET /api/docs`
 - API routes: `GET /api/preferences/*` (communicates with preference microservice via TCP)
+- GitHub API routes: `GET /api/github/*` (proxies to GitHub Import Service via HTTP)
 
 **Preference Service**: `http://localhost:3001`  
 - Health check: `GET /health`
@@ -66,6 +70,16 @@ Changes you make to code on your host are picked up immediately in this local (n
 - Get specific preference: `GET /preferences/user/:userId/:key`
 - Update preference: `PUT /preferences/user/:userId/:key`
 - Delete preference: `DELETE /preferences/user/:userId/:key`
+
+**GitHub Import Service**: Internal service (no direct access)
+- **Access via Gateway**: All GitHub endpoints available at `/api/github/*` routes
+- Health check via Gateway: `GET /api/github/health`
+- Service status via Gateway: `GET /api/github/test`
+- Get repository via Gateway: `GET /api/github/repo/:owner/:repo`
+- Get user repositories via Gateway: `GET /api/github/user/:username/repos`
+- GitHub API integration using Octokit
+- Environment variable: `GITHUB_TOKEN` (optional for public repos)
+- **Note**: Service runs internally - all access must go through Gateway
 
 **MCP Service**: `http://localhost:3003/mcp` (HTTP bridge)
 - Model Context Protocol server for Claude integration via HTTP bridge
@@ -92,6 +106,24 @@ curl -X POST http://localhost:3000/api/preferences \
 Get user preferences:
 ```bash
 curl http://localhost:3000/api/preferences/user/user123
+```
+
+**GitHub Import Service Examples (via Gateway):**
+
+Test the service:
+```bash
+curl http://localhost:3000/api/github/health
+curl http://localhost:3000/api/github/test
+```
+
+Get a public repository:
+```bash
+curl "http://localhost:3000/api/github/repo/octocat/Hello-World"
+```
+
+Get a user's repositories:
+```bash
+curl "http://localhost:3000/api/github/user/octocat/repos"
 ```
 
 ### Claude Integration
@@ -149,6 +181,10 @@ This staged approach provides a working local system now while enabling secure i
 
 - `npm run build` - Build all packages
 - `npm run dev` - Start all services in development mode
+- `npm run dev:gateway` - Start only gateway service
+- `npm run dev:preference` - Start only preference service
+- `npm run dev:github` - Start only GitHub import service
+- `npm run dev:mcp` - Start only MCP service
 - `npm run lint` - Lint all packages
 - `npm run test` - Run tests for all packages
 - `npm run clean` - Clean build artifacts and node_modules
@@ -157,10 +193,11 @@ This staged approach provides a working local system now while enabling secure i
 
 ```
 packages/
-├── gateway/           # API Gateway service
+├── gateway/             # API Gateway service
 ├── preference-service/  # User preference management
-├── mcp-service/       # Model Context Protocol server for Claude
-└── shared/            # Shared types and utilities
+├── github-import-service/ # GitHub data import service
+├── mcp-service/         # Model Context Protocol server for Claude
+└── shared/              # Shared types and utilities
 ```
 
 ### Adding New Services
@@ -208,9 +245,11 @@ This architecture leverages NestJS's powerful features:
 - **HTTP**: Gateway exposes REST API to external clients
 - **TCP**: Internal service-to-service communication via NestJS microservices
 - **Ports**:
-  - Gateway HTTP: 3000  
-  - Preference Service HTTP: 3001
-  - Preference Service TCP: 3002
+  - Gateway HTTP: 3000 (external access)
+  - Preference Service HTTP: 3001 (external access for development)
+  - Preference Service TCP: 3002 (internal gateway communication)
+  - GitHub Import Service HTTP: 3004 (internal only - access via gateway)
+  - MCP Service HTTP: 3003 (external access for Claude)
 
 ## Deployment
 
