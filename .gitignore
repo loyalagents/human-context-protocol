@@ -8,6 +8,13 @@ yarn-error.log*
 dist/
 build/
 *.tsbuildinfo
+packages/*/tsconfig.tsbuildinfo
+packages/*/dist/
+
+# Generated JS/Maps/Declarations (keep src clean)
+packages/*/src/**/*.js
+packages/*/src/**/*.js.map
+packages/*/src/**/*.d.ts
 
 # Environment variables
 .env

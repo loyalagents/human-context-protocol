@@ -14,26 +14,38 @@ This monorepo contains multiple microservices built with NestJS:
 
 ### Prerequisites
 
-- Node.js 18+ 
-- npm/yarn/pnpm
+- Docker & Docker Compose
 
-### Installation
+### Quick Start with Docker (Recommended)
 
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+**Just one command to run everything:**
 
-3. Build all packages:
-   ```bash
-   npm run build
-   ```
+```bash
+docker compose up --build
+```
 
-4. Start development servers:
-   ```bash
-   npm run dev
-   ```
+That's it! This will:
+- ✅ Start MongoDB automatically
+- ✅ Build and run all services (production mode)
+- ✅ Set up networking between services
+
+Note: in this default configuration, containers run compiled code (no live reload). See "Live Reload Options" below if you want auto-rebuild on file changes.
+
+**Services will be available at:**
+- Gateway: http://localhost:3000
+- Preference Service: http://localhost:3001  
+- MongoDB: localhost:27017
+
+### Local Development (Alternative)
+
+If you prefer to run without Docker:
+
+1. **Prerequisites:** Node.js 18+, MongoDB running locally
+2. **Install:** `npm install`  
+3. **Build:** `npm run build`
+4. **Run:** `npm run dev`
+
+Changes you make to code on your host are picked up immediately in this local (non-Docker) flow.
 
 ### Services
 
@@ -97,6 +109,26 @@ packages/
 3. Create TypeScript config extending root config
 4. Add service reference to root tsconfig.json
 5. Update gateway proxy routes if needed
+
+## Live Reload Options
+
+By default, `docker compose up --build` runs services in production mode without live reload. To pick up code changes you must rebuild:
+
+- Rebuild and run: `docker compose up --build`
+- Or rebuild images only: `docker compose build` then `docker compose up`
+
+If you want live reload inside Docker, there are two common approaches we can add later:
+
+- Dev profile with bind mounts + explicit build-then-watch per service
+  - Mount `packages/<service>` into the container.
+  - Run from the service directory: `npm run build` once, then `tsc --watch` to emit `dist`, and run `node dist/main.js` with a watcher (e.g., nodemon) that restarts on `dist/**` changes.
+  - This avoids issues with workspace CWD and ensures a first emit exists before starting the app.
+
+- Hybrid: run services locally, keep only MongoDB in Docker
+  - `docker compose up mongodb`
+  - In another terminal, run `npm run dev` locally. This gives the fastest iteration loop.
+
+If you want, we can add a `docker-compose.dev.yml` that enables bind mounts and a reliable watch flow for both services, while keeping the current file as a stable production profile.
 
 ## NestJS Features
 

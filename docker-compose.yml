@@ -1,36 +1,54 @@
-version: '3.8'
-
 services:
-  gateway:
-    build:
-      context: .
-      dockerfile: packages/gateway/Dockerfile
+  mongodb:
+    image: mongo:7
+    container_name: mongodb
+    restart: unless-stopped
     ports:
-      - "3000:3000"
-    environment:
-      - PORT=3000
-      - NODE_ENV=development
-      - PREFERENCE_SERVICE_URL=http://preference-service:3001
-    depends_on:
-      - preference-service
+      - "27017:27017"
     volumes:
-      - ./packages/gateway:/app/packages/gateway
-      - ./packages/shared:/app/packages/shared
-    command: npm run dev --workspace=@personal-context-router/gateway
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: personal-context-router
 
   preference-service:
     build:
       context: .
       dockerfile: packages/preference-service/Dockerfile
+    container_name: preference-service
+    restart: unless-stopped
     ports:
       - "3001:3001"
+      - "3002:3002"
+    # Run compiled code (production mode; no live reload)
+    command: npm run start:prod --workspace=@personal-context-router/preference-service
     environment:
       - PORT=3001
+      - MICROSERVICE_PORT=3002
       - NODE_ENV=development
-    volumes:
-      - ./packages/preference-service:/app/packages/preference-service
-      - ./packages/shared:/app/packages/shared
-    command: npm run dev --workspace=@personal-context-router/preference-service
+      - MONGODB_URI=mongodb://mongodb:27017/personal-context-router
+    depends_on:
+      - mongodb
+
+  gateway:
+    build:
+      context: .
+      dockerfile: packages/gateway/Dockerfile
+    container_name: gateway
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    # Run compiled code (production mode; no live reload)
+    command: npm run start:prod --workspace=@personal-context-router/gateway
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+      - PREFERENCE_SERVICE_HOST=preference-service
+      - PREFERENCE_SERVICE_PORT=3002
+    depends_on:
+      - preference-service
+
+volumes:
+  mongodb_data:
 
 networks:
   default:

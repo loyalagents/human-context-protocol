@@ -17,9 +17,6 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "baseUrl": ".",
-    "paths": {
-      "@shared/*": ["packages/shared/src/*"]
-    }
   },
   "include": ["packages/*/src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"],
