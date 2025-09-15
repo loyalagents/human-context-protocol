@@ -47,6 +47,23 @@ services:
     depends_on:
       - preference-service
 
+  mcp-service:
+    build:
+      context: .
+      dockerfile: packages/mcp-service/Dockerfile
+    container_name: mcp-service
+    restart: unless-stopped
+    ports:
+      - "3003:3003"
+    # Run HTTP MCP server (production mode; no live reload)
+    command: npm run start --workspace=@personal-context-router/mcp-service
+    environment:
+      - PORT=3003
+      - NODE_ENV=development
+      - GATEWAY_URL=http://gateway:3000
+    depends_on:
+      - gateway
+
 volumes:
   mongodb_data:
 

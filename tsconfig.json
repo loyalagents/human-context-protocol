@@ -23,6 +23,7 @@
   "references": [
     { "path": "./packages/shared" },
     { "path": "./packages/gateway" },
-    { "path": "./packages/preference-service" }
+    { "path": "./packages/preference-service" },
+    { "path": "./packages/mcp-service" }
   ]
 }

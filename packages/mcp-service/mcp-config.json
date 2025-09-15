@@ -1,0 +1,39 @@
+{
+  "name": "personal-context-router",
+  "description": "Personal Context Router MCP Server - Manage user preferences and context",
+  "version": "1.0.0",
+  "tools": [
+    {
+      "name": "get_user_preferences",
+      "description": "Get all preferences for a specific user"
+    },
+    {
+      "name": "get_preference",
+      "description": "Get a specific preference value for a user"
+    },
+    {
+      "name": "set_preference",
+      "description": "Set or update a preference for a user"
+    },
+    {
+      "name": "update_preference",
+      "description": "Update an existing preference for a user"
+    },
+    {
+      "name": "delete_preference",
+      "description": "Delete a preference for a user"
+    },
+    {
+      "name": "list_preference_keys",
+      "description": "List all preference keys for a user"
+    }
+  ],
+  "connection": {
+    "type": "stdio",
+    "command": "npm",
+    "args": ["run", "start", "--workspace=@personal-context-router/mcp-service"],
+    "env": {
+      "GATEWAY_URL": "http://localhost:3000"
+    }
+  }
+}

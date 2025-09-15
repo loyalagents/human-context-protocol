@@ -8,6 +8,7 @@ This monorepo contains multiple microservices built with NestJS:
 
 - **Gateway Service** (`packages/gateway`): NestJS API Gateway with built-in rate limiting, validation, and microservice communication
 - **Preference Service** (`packages/preference-service`): NestJS microservice for managing user preferences (HTTP + TCP transport)
+- **MCP Service** (`packages/mcp-service`): Model Context Protocol server for Claude integration, exposing preference management tools
 - **Shared Package** (`packages/shared`): Common DTOs, interfaces, decorators, and validation schemas
 
 ## Quick Start
@@ -28,12 +29,14 @@ That's it! This will:
 - ✅ Start MongoDB automatically
 - ✅ Build and run all services (production mode)
 - ✅ Set up networking between services
+- ✅ MCP service available for Claude integration
 
 Note: in this default configuration, containers run compiled code (no live reload). See "Live Reload Options" below if you want auto-rebuild on file changes.
 
 **Services will be available at:**
 - Gateway: http://localhost:3000
-- Preference Service: http://localhost:3001  
+- Preference Service: http://localhost:3001
+- MCP Service: http://localhost:3003/mcp (HTTP bridge for Claude integration)
 - MongoDB: localhost:27017
 
 ### Local Development (Alternative)
@@ -41,9 +44,9 @@ Note: in this default configuration, containers run compiled code (no live reloa
 If you prefer to run without Docker:
 
 1. **Prerequisites:** Node.js 22+, MongoDB running locally
-2. **Install:** `npm install`  
+2. **Install:** `npm install`
 3. **Build:** `npm run build`
-4. **Run:** `npm run dev`
+4. **Run:** `npm run dev` (starts all services including MCP)
 
 Changes you make to code on your host are picked up immediately in this local (non-Docker) flow.
 
@@ -64,6 +67,14 @@ Changes you make to code on your host are picked up immediately in this local (n
 - Update preference: `PUT /preferences/user/:userId/:key`
 - Delete preference: `DELETE /preferences/user/:userId/:key`
 
+**MCP Service**: `http://localhost:3003/mcp` (HTTP bridge)
+- Model Context Protocol server for Claude integration via HTTP bridge
+- Provides tools: `get_user_preferences`, `get_preference`, `set_preference`, `update_preference`, `delete_preference`, `list_preference_keys`
+- Connects to Gateway via HTTP for all operations
+- **HTTP endpoint**: `/mcp` handles JSON-RPC requests
+- **Health check**: `/health` for service monitoring
+- **Claude setup**: Use `claude-desktop-config-example.json` configuration
+
 ### API Examples
 
 Create a preference:
@@ -83,6 +94,30 @@ Get user preferences:
 curl http://localhost:3000/api/preferences/user/user123
 ```
 
+### Claude Integration
+
+To use the MCP service with Claude Desktop:
+
+1. **Start the services**: `docker compose up --build` (or `npm run dev` for local development)
+
+2. **Add to Claude Desktop config**: Copy the configuration from `claude-desktop-config-example.json` to your Claude Desktop config file:
+
+   **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+   **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+   **Linux**: `~/.config/Claude/claude_desktop_config.json`
+
+3. **Restart Claude Desktop** - The MCP server will be available automatically
+
+4. **Available MCP Tools**:
+   - `get_user_preferences(userId)` - Get all preferences for a user
+   - `get_preference(userId, key)` - Get specific preference
+   - `set_preference(userId, key, value, type)` - Create/update preference
+   - `update_preference(userId, key, value)` - Update existing preference
+   - `delete_preference(userId, key)` - Delete preference
+   - `list_preference_keys(userId)` - List all preference keys
+
+**Version Note**: Using `mcp-remote@0.1.18` for consistent behavior across team members. To upgrade: update version in `claude-desktop-config-example.json` and test thoroughly.
+
 ## Development
 
 ### Commands
@@ -99,6 +134,7 @@ curl http://localhost:3000/api/preferences/user/user123
 packages/
 ├── gateway/           # API Gateway service
 ├── preference-service/  # User preference management
+├── mcp-service/       # Model Context Protocol server for Claude
 └── shared/            # Shared types and utilities
 ```
 

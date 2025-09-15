@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "personal-context-router": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote@0.1.18",
+        "http://localhost:3003/mcp",
+        "--mode", "duplex",
+        "--allow-http"
+      ]
+    }
+  }
+}

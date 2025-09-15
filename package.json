@@ -10,9 +10,10 @@
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces",
     "lint": "npm run lint --workspaces",
-    "dev": "concurrently \"npm run dev --workspace=@personal-context-router/preference-service\" \"npm run dev --workspace=@personal-context-router/gateway\"",
+    "dev": "concurrently \"npm run dev --workspace=@personal-context-router/preference-service\" \"npm run dev --workspace=@personal-context-router/gateway\" \"npm run dev --workspace=@personal-context-router/mcp-service\"",
     "dev:gateway": "npm run dev --workspace=@personal-context-router/gateway",
     "dev:preference": "npm run dev --workspace=@personal-context-router/preference-service",
+    "dev:mcp": "npm run dev --workspace=@personal-context-router/mcp-service",
     "start": "npm run start --workspaces --parallel",
     "clean": "rm -rf node_modules packages/*/node_modules packages/*/dist"
   },
