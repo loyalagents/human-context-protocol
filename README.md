@@ -1,16 +1,23 @@
-# Personal Context Router
+# Human Context Protocol
 
-A microservices monorepo built with **NestJS** and TypeScript for managing personal context and preferences.
+**NestJS microservices platform enabling Claude AI to access and manage user preferences and GitHub data via Model Context Protocol (MCP).**
+
+## What This Does
+
+This system allows Claude Desktop to:
+- Store and retrieve user preferences across sessions
+- Access GitHub repository and user data
+- Maintain persistent context for personalized interactions
 
 ## Architecture
 
-This monorepo contains multiple microservices built with NestJS:
+**5 interconnected NestJS services:**
 
-- **Gateway Service** (`packages/gateway`): NestJS API Gateway with built-in rate limiting, validation, and microservice communication
-- **Preference Service** (`packages/preference-service`): NestJS microservice for managing user preferences (HTTP + TCP transport)
-- **GitHub Import Service** (`packages/github-import-service`): NestJS service for importing GitHub repository data and user information
-- **MCP Service** (`packages/mcp-service`): Model Context Protocol server for Claude integration, exposing preference management tools
-- **Shared Package** (`packages/shared`): Common DTOs, interfaces, decorators, and validation schemas
+- **Gateway** (`packages/gateway`): API router with rate limiting and validation
+- **Preference Service** (`packages/preference-service`): MongoDB-backed preference storage (HTTP + TCP)  
+- **GitHub Import Service** (`packages/github-import-service`): GitHub API integration via Octokit
+- **MCP Service** (`packages/mcp-service`): Claude integration via Model Context Protocol
+- **Shared** (`packages/shared`): Common types, DTOs, and utilities
 
 ## Quick Start
 
