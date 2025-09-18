@@ -29,6 +29,25 @@ services:
     depends_on:
       - mongodb
 
+  user-service:
+    build:
+      context: .
+      dockerfile: packages/user-service/Dockerfile
+    container_name: user-service
+    restart: unless-stopped
+    ports:
+      - "3015:3015"
+      - "3016:3016"
+    # Run compiled code (production mode; no live reload)
+    command: npm run start:prod --workspace=@personal-context-router/user-service
+    environment:
+      - PORT=3015
+      - MICROSERVICE_PORT=3016
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://mongodb:27017/personal-context-router
+    depends_on:
+      - mongodb
+
   gateway:
     build:
       context: .
@@ -44,10 +63,13 @@ services:
       - NODE_ENV=development
       - PREFERENCE_SERVICE_HOST=preference-service
       - PREFERENCE_SERVICE_PORT=3002
+      - USER_SERVICE_HOST=user-service
+      - USER_SERVICE_PORT=3016
       - GITHUB_SERVICE_HOST=github-import-service
       - GITHUB_SERVICE_PORT=3004
     depends_on:
       - preference-service
+      - user-service
       - github-import-service
 
   mcp-service:

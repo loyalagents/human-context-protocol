@@ -5,6 +5,7 @@
 ## What This Does
 
 This system allows Claude Desktop to:
+- Manage user accounts and authentication
 - Store and retrieve user preferences across sessions
 - Access GitHub repository and user data
 - Maintain persistent context for personalized interactions

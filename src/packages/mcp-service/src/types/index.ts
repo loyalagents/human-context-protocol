@@ -25,3 +25,28 @@ export interface UpdatePreferenceRequest {
   value: any;
   type?: 'string' | 'number' | 'boolean' | 'object';
 }
+
+// User-related types
+export interface UserResponse {
+  id: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  isActive: boolean;
+  lastLoginAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateUserRequest {
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  isActive?: boolean;
+}
+
+export interface UpdateUserRequest {
+  firstName?: string;
+  lastName?: string;
+  isActive?: boolean;
+}

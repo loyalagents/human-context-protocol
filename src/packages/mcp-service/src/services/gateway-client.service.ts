@@ -3,7 +3,10 @@ import {
   GatewayResponse,
   PreferenceResponse,
   CreatePreferenceRequest,
-  UpdatePreferenceRequest
+  UpdatePreferenceRequest,
+  UserResponse,
+  CreateUserRequest,
+  UpdateUserRequest
 } from '../types';
 
 export class GatewayClientService {
@@ -81,6 +84,42 @@ export class GatewayClientService {
 
   async getUserRepos(username: string): Promise<any[]> {
     const response = await this.client.get<any[]>(`/api/github/user/${username}/repos`);
+    return response.data;
+  }
+
+  // User API methods
+  async createUser(request: CreateUserRequest): Promise<UserResponse> {
+    const response = await this.client.post<UserResponse>('/api/users', request);
+    return response.data;
+  }
+
+  async getUser(userId: string): Promise<UserResponse> {
+    const response = await this.client.get<UserResponse>(`/api/users/${userId}`);
+    return response.data;
+  }
+
+  async getUserByEmail(email: string): Promise<UserResponse> {
+    const response = await this.client.get<UserResponse>(`/api/users/by-email/${email}`);
+    return response.data;
+  }
+
+  async updateUser(userId: string, request: UpdateUserRequest): Promise<UserResponse> {
+    const response = await this.client.put<UserResponse>(`/api/users/${userId}`, request);
+    return response.data;
+  }
+
+  async deactivateUser(userId: string): Promise<UserResponse> {
+    const response = await this.client.put<UserResponse>(`/api/users/${userId}/deactivate`);
+    return response.data;
+  }
+
+  async recordUserLogin(userId: string): Promise<UserResponse> {
+    const response = await this.client.put<UserResponse>(`/api/users/${userId}/login`);
+    return response.data;
+  }
+
+  async getAllUsers(): Promise<UserResponse[]> {
+    const response = await this.client.get<UserResponse[]>('/api/users');
     return response.data;
   }
 }

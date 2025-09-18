@@ -4,6 +4,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { HealthModule } from './modules/health/health.module';
 import { PreferenceModule } from './modules/preference/preference.module';
 import { GitHubModule } from './modules/github/github.module';
+import { UserModule } from './modules/user/user.module';
 import configuration from './config/configuration';
 
 @Module({
@@ -19,6 +20,7 @@ import configuration from './config/configuration';
     HealthModule,
     PreferenceModule,
     GitHubModule,
+    UserModule,
   ],
 })
 export class AppModule {}

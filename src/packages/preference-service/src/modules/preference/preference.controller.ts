@@ -1,22 +1,25 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Put, 
-  Delete, 
-  Body, 
-  Param, 
-  Query 
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
-import { 
-  CreatePreferenceDto, 
-  UpdatePreferenceDto, 
+import {
+  CreatePreferenceDto,
+  UpdatePreferenceDto,
   PreferenceFilterDto,
   UserPreferenceParamsDto,
   PreferenceParamsDto,
   UserPreference,
-  ApiResponse
+  ApiResponse,
+  createPreferenceId,
+  createUserId
 } from '@personal-context-router/shared';
 import { PreferenceService } from '../../services/preference.service';
 
@@ -27,7 +30,7 @@ export class PreferenceController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new preference' })
-  async createPreference(@Body() createPreferenceDto: CreatePreferenceDto): Promise<ApiResponse<UserPreference>> {
+  async createPreference(@Body(ValidationPipe) createPreferenceDto: CreatePreferenceDto): Promise<ApiResponse<UserPreference>> {
     try {
       const preference = await this.preferenceService.createPreference(createPreferenceDto);
       return {
@@ -63,8 +66,9 @@ export class PreferenceController {
   @Get('user/:userId')
   @ApiOperation({ summary: 'Get all preferences for a specific user' })
   @ApiParam({ name: 'userId', description: 'User ID' })
-  async getUserPreferences(@Param('userId') userId: string): Promise<ApiResponse<UserPreference[]>> {
+  async getUserPreferences(@Param('userId') userIdParam: string): Promise<ApiResponse<UserPreference[]>> {
     try {
+      const userId = createUserId(userIdParam);
       const preferences = await this.preferenceService.getUserPreferences(userId);
       return {
         success: true,
@@ -82,9 +86,10 @@ export class PreferenceController {
   @ApiOperation({ summary: 'Get a specific preference by user ID and key' })
   @ApiParam({ name: 'userId', description: 'User ID' })
   @ApiParam({ name: 'key', description: 'Preference key' })
-  async getUserPreference(@Param() params: UserPreferenceParamsDto): Promise<ApiResponse<UserPreference>> {
+  async getUserPreference(@Param(ValidationPipe) params: UserPreferenceParamsDto): Promise<ApiResponse<UserPreference>> {
     try {
-      const preference = await this.preferenceService.getUserPreference(params.userId, params.key);
+      const userId = createUserId(params.userId);
+      const preference = await this.preferenceService.getUserPreference(userId, params.key);
       return {
         success: true,
         data: preference,
@@ -102,13 +107,14 @@ export class PreferenceController {
   @ApiParam({ name: 'userId', description: 'User ID' })
   @ApiParam({ name: 'key', description: 'Preference key' })
   async updateUserPreference(
-    @Param() params: UserPreferenceParamsDto,
-    @Body() updatePreferenceDto: UpdatePreferenceDto
+    @Param(ValidationPipe) params: UserPreferenceParamsDto,
+    @Body(ValidationPipe) updatePreferenceDto: UpdatePreferenceDto
   ): Promise<ApiResponse<UserPreference>> {
     try {
+      const userId = createUserId(params.userId);
       const preference = await this.preferenceService.updateUserPreference(
-        params.userId, 
-        params.key, 
+        userId,
+        params.key,
         updatePreferenceDto
       );
       return {
@@ -128,9 +134,10 @@ export class PreferenceController {
   @ApiOperation({ summary: 'Delete a preference by user ID and key' })
   @ApiParam({ name: 'userId', description: 'User ID' })
   @ApiParam({ name: 'key', description: 'Preference key' })
-  async deleteUserPreference(@Param() params: UserPreferenceParamsDto): Promise<ApiResponse> {
+  async deleteUserPreference(@Param(ValidationPipe) params: UserPreferenceParamsDto): Promise<ApiResponse> {
     try {
-      await this.preferenceService.deleteUserPreference(params.userId, params.key);
+      const userId = createUserId(params.userId);
+      await this.preferenceService.deleteUserPreference(userId, params.key);
       return {
         success: true,
         message: 'Preference deleted successfully',
@@ -146,9 +153,10 @@ export class PreferenceController {
   @Get(':id')
   @ApiOperation({ summary: 'Get a preference by ID' })
   @ApiParam({ name: 'id', description: 'Preference ID' })
-  async getPreference(@Param() params: PreferenceParamsDto): Promise<ApiResponse<UserPreference>> {
+  async getPreference(@Param(ValidationPipe) params: PreferenceParamsDto): Promise<ApiResponse<UserPreference>> {
     try {
-      const preference = await this.preferenceService.getPreference(params.id);
+      const preferenceId = createPreferenceId(params.id);
+      const preference = await this.preferenceService.getPreference(preferenceId);
       return {
         success: true,
         data: preference,
@@ -165,11 +173,12 @@ export class PreferenceController {
   @ApiOperation({ summary: 'Update a preference by ID' })
   @ApiParam({ name: 'id', description: 'Preference ID' })
   async updatePreference(
-    @Param() params: PreferenceParamsDto,
-    @Body() updatePreferenceDto: UpdatePreferenceDto
+    @Param(ValidationPipe) params: PreferenceParamsDto,
+    @Body(ValidationPipe) updatePreferenceDto: UpdatePreferenceDto
   ): Promise<ApiResponse<UserPreference>> {
     try {
-      const preference = await this.preferenceService.updatePreference(params.id, updatePreferenceDto);
+      const preferenceId = createPreferenceId(params.id);
+      const preference = await this.preferenceService.updatePreference(preferenceId, updatePreferenceDto);
       return {
         success: true,
         data: preference,
@@ -186,9 +195,10 @@ export class PreferenceController {
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a preference by ID' })
   @ApiParam({ name: 'id', description: 'Preference ID' })
-  async deletePreference(@Param() params: PreferenceParamsDto): Promise<ApiResponse> {
+  async deletePreference(@Param(ValidationPipe) params: PreferenceParamsDto): Promise<ApiResponse> {
     try {
-      await this.preferenceService.deletePreference(params.id);
+      const preferenceId = createPreferenceId(params.id);
+      await this.preferenceService.deletePreference(preferenceId);
       return {
         success: true,
         message: 'Preference deleted successfully',

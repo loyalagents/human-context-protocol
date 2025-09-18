@@ -1,8 +1,10 @@
 import { PreferenceType } from '../dto/preference.dto';
+import { PreferenceId } from '../branded-types/preference-id';
+import { UserId } from '../branded-types/user-id';
 
 export interface UserPreference {
-  id: string;
-  userId: string;
+  id: PreferenceId;
+  userId: UserId;
   key: string;
   value: any;
   type: PreferenceType;
@@ -11,7 +13,7 @@ export interface UserPreference {
 }
 
 export interface PreferenceFilter {
-  userId?: string;
+  userId?: UserId;
   key?: string;
   type?: PreferenceType;
 }

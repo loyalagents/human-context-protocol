@@ -1,11 +1,17 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { 
-  CreatePreferenceDto, 
-  UpdatePreferenceDto, 
+import {
+  CreatePreferenceDto,
+  UpdatePreferenceDto,
   PreferenceFilterDto,
   UserPreference,
   PreferenceType,
-  Logger 
+  Logger,
+  UserId,
+  PreferenceId,
+  objectIdToPreferenceId,
+  objectIdToUserId,
+  createUserId,
+  createPreferenceId
 } from '@personal-context-router/shared';
 import { PreferenceRepository } from '../repositories/preference.repository';
 import { PreferenceDocument } from '../schemas/preference.schema';
@@ -18,8 +24,8 @@ export class PreferenceService {
 
   private toUserPreference(doc: PreferenceDocument): UserPreference {
     return {
-      id: doc._id.toString(),
-      userId: doc.userId,
+      id: createPreferenceId(doc._id.toString()), // Convert ObjectId to string, then to branded type
+      userId: createUserId(doc.userId), // doc.userId is stored as string in MongoDB
       key: doc.key,
       value: doc.data?.value || doc.data, // Support both new and legacy format
       type: doc.data?.type || PreferenceType.OBJECT,
@@ -29,17 +35,20 @@ export class PreferenceService {
   }
 
   async createPreference(createPreferenceDto: CreatePreferenceDto): Promise<UserPreference> {
-    this.logger.info('Creating preference', { 
-      userId: createPreferenceDto.userId, 
-      key: createPreferenceDto.key 
+    this.logger.info('Creating preference', {
+      userId: createPreferenceDto.userId,
+      key: createPreferenceDto.key
     });
+
+    // Convert string to branded type
+    const userId = createUserId(createPreferenceDto.userId);
 
     // Check if preference already exists
     const existing = await this.preferenceRepository.findByUserIdAndKey(
-      createPreferenceDto.userId, 
+      userId,
       createPreferenceDto.key
     );
-    
+
     if (existing) {
       throw new ConflictException('Preference already exists for this user and key');
     }
@@ -51,7 +60,7 @@ export class PreferenceService {
     };
 
     const doc = await this.preferenceRepository.create(
-      createPreferenceDto.userId,
+      userId,
       createPreferenceDto.key,
       data
     );
@@ -59,29 +68,29 @@ export class PreferenceService {
     return this.toUserPreference(doc);
   }
 
-  async getPreference(id: string): Promise<UserPreference> {
+  async getPreference(id: PreferenceId): Promise<UserPreference> {
     this.logger.debug('Getting preference by id', { id });
     const doc = await this.preferenceRepository.findById(id);
-    
+
     if (!doc) {
       throw new NotFoundException('Preference not found');
     }
-    
+
     return this.toUserPreference(doc);
   }
 
-  async getUserPreference(userId: string, key: string): Promise<UserPreference> {
+  async getUserPreference(userId: UserId, key: string): Promise<UserPreference> {
     this.logger.debug('Getting user preference', { userId, key });
     const doc = await this.preferenceRepository.findByUserIdAndKey(userId, key);
-    
+
     if (!doc) {
       throw new NotFoundException('Preference not found');
     }
-    
+
     return this.toUserPreference(doc);
   }
 
-  async getUserPreferences(userId: string): Promise<UserPreference[]> {
+  async getUserPreferences(userId: UserId): Promise<UserPreference[]> {
     this.logger.debug('Getting all preferences for user', { userId });
     const docs = await this.preferenceRepository.findByUserId(userId);
     return docs.map(doc => this.toUserPreference(doc));
@@ -89,55 +98,56 @@ export class PreferenceService {
 
   async findPreferences(filter: PreferenceFilterDto): Promise<UserPreference[]> {
     this.logger.debug('Finding preferences with filter', filter);
-    
+
     // For now, simple implementation - can be enhanced later with more complex filters
     if (filter.userId) {
-      return this.getUserPreferences(filter.userId);
+      const userId = createUserId(filter.userId);
+      return this.getUserPreferences(userId);
     }
-    
+
     const docs = await this.preferenceRepository.findAll();
     return docs.map(doc => this.toUserPreference(doc));
   }
 
-  async updatePreference(id: string, updatePreferenceDto: UpdatePreferenceDto): Promise<UserPreference> {
+  async updatePreference(id: PreferenceId, updatePreferenceDto: UpdatePreferenceDto): Promise<UserPreference> {
     this.logger.info('Updating preference', { id });
-    
+
     const data = {
       value: updatePreferenceDto.value,
       type: updatePreferenceDto.type,
     };
-    
+
     const doc = await this.preferenceRepository.updateById(id, data);
-    
+
     if (!doc) {
       throw new NotFoundException('Preference not found');
     }
-    
+
     return this.toUserPreference(doc);
   }
 
   async updateUserPreference(
-    userId: string, 
-    key: string, 
+    userId: UserId,
+    key: string,
     updatePreferenceDto: UpdatePreferenceDto
   ): Promise<UserPreference> {
     this.logger.info('Updating user preference', { userId, key });
-    
+
     const data = {
       value: updatePreferenceDto.value,
       type: updatePreferenceDto.type,
     };
-    
+
     const doc = await this.preferenceRepository.updateByUserIdAndKey(userId, key, data);
-    
+
     if (!doc) {
       throw new NotFoundException('Preference not found');
     }
-    
+
     return this.toUserPreference(doc);
   }
 
-  async deletePreference(id: string): Promise<void> {
+  async deletePreference(id: PreferenceId): Promise<void> {
     this.logger.info('Deleting preference', { id });
     const deleted = await this.preferenceRepository.deleteById(id);
     
@@ -146,17 +156,17 @@ export class PreferenceService {
     }
   }
 
-  async deleteUserPreference(userId: string, key: string): Promise<void> {
+  async deleteUserPreference(userId: UserId, key: string): Promise<void> {
     this.logger.info('Deleting user preference', { userId, key });
     const deleted = await this.preferenceRepository.deleteByUserIdAndKey(userId, key);
-    
+
     if (!deleted) {
       throw new NotFoundException('Preference not found');
     }
   }
 
   // Bonus method for data imports - create or update with any data structure
-  async importPreference(userId: string, key: string, data: any): Promise<UserPreference> {
+  async importPreference(userId: UserId, key: string, data: any): Promise<UserPreference> {
     this.logger.info('Importing preference', { userId, key });
     const doc = await this.preferenceRepository.upsert(userId, key, data);
     return this.toUserPreference(doc);

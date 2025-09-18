@@ -1,11 +1,13 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { 
-  CreatePreferenceDto, 
-  UpdatePreferenceDto, 
+import {
+  CreatePreferenceDto,
+  UpdatePreferenceDto,
   PreferenceFilterDto,
   UserPreference,
-  ApiResponse
+  ApiResponse,
+  createUserId,
+  createPreferenceId
 } from '@personal-context-router/shared';
 import { PreferenceService } from '../../services/preference.service';
 
@@ -49,7 +51,8 @@ export class PreferenceMicroserviceController {
   @MessagePattern('getUserPreferences')
   async getUserPreferences(@Payload() data: { userId: string }): Promise<ApiResponse<UserPreference[]>> {
     try {
-      const preferences = await this.preferenceService.getUserPreferences(data.userId);
+      const userId = createUserId(data.userId);
+      const preferences = await this.preferenceService.getUserPreferences(userId);
       return {
         success: true,
         data: preferences,
@@ -65,7 +68,8 @@ export class PreferenceMicroserviceController {
   @MessagePattern('getUserPreference')
   async getUserPreference(@Payload() data: { userId: string; key: string }): Promise<ApiResponse<UserPreference>> {
     try {
-      const preference = await this.preferenceService.getUserPreference(data.userId, data.key);
+      const userId = createUserId(data.userId);
+      const preference = await this.preferenceService.getUserPreference(userId, data.key);
       return {
         success: true,
         data: preference,
@@ -81,11 +85,12 @@ export class PreferenceMicroserviceController {
   @MessagePattern('updateUserPreference')
   async updateUserPreference(@Payload() data: { userId: string; key: string; value: any; type?: string }): Promise<ApiResponse<UserPreference>> {
     try {
+      const userId = createUserId(data.userId);
       const updateDto: UpdatePreferenceDto = {
         value: data.value,
         type: data.type as any,
       };
-      const preference = await this.preferenceService.updateUserPreference(data.userId, data.key, updateDto);
+      const preference = await this.preferenceService.updateUserPreference(userId, data.key, updateDto);
       return {
         success: true,
         data: preference,
@@ -102,7 +107,8 @@ export class PreferenceMicroserviceController {
   @MessagePattern('deleteUserPreference')
   async deleteUserPreference(@Payload() data: { userId: string; key: string }): Promise<ApiResponse> {
     try {
-      await this.preferenceService.deleteUserPreference(data.userId, data.key);
+      const userId = createUserId(data.userId);
+      await this.preferenceService.deleteUserPreference(userId, data.key);
       return {
         success: true,
         message: 'Preference deleted successfully',
@@ -118,7 +124,8 @@ export class PreferenceMicroserviceController {
   @MessagePattern('getPreference')
   async getPreference(@Payload() data: { id: string }): Promise<ApiResponse<UserPreference>> {
     try {
-      const preference = await this.preferenceService.getPreference(data.id);
+      const preferenceId = createPreferenceId(data.id);
+      const preference = await this.preferenceService.getPreference(preferenceId);
       return {
         success: true,
         data: preference,
@@ -134,11 +141,12 @@ export class PreferenceMicroserviceController {
   @MessagePattern('updatePreference')
   async updatePreference(@Payload() data: { id: string; value: any; type?: string }): Promise<ApiResponse<UserPreference>> {
     try {
+      const preferenceId = createPreferenceId(data.id);
       const updateDto: UpdatePreferenceDto = {
         value: data.value,
         type: data.type as any,
       };
-      const preference = await this.preferenceService.updatePreference(data.id, updateDto);
+      const preference = await this.preferenceService.updatePreference(preferenceId, updateDto);
       return {
         success: true,
         data: preference,
@@ -155,7 +163,8 @@ export class PreferenceMicroserviceController {
   @MessagePattern('deletePreference')
   async deletePreference(@Payload() data: { id: string }): Promise<ApiResponse> {
     try {
-      await this.preferenceService.deletePreference(data.id);
+      const preferenceId = createPreferenceId(data.id);
+      await this.preferenceService.deletePreference(preferenceId);
       return {
         success: true,
         message: 'Preference deleted successfully',

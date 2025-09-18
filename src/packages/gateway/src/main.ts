@@ -26,6 +26,7 @@ async function bootstrap() {
     .setDescription('API Gateway for microservices')
     .setVersion('1.0')
     .addTag('gateway', 'Gateway health and status endpoints')
+    .addTag('users', 'User account management operations')
     .addTag('preferences', 'User preference management operations')
     .addTag('github', 'GitHub repository and user data operations')
     .build();

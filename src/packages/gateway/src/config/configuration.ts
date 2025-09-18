@@ -7,6 +7,11 @@ export default () => ({
       port: parseInt(process.env.PREFERENCE_SERVICE_PORT || '3002', 10),
       timeout: 5000,
     },
+    user: {
+      host: process.env.USER_SERVICE_HOST || 'localhost',
+      port: parseInt(process.env.USER_SERVICE_PORT || '3016', 10),
+      timeout: 5000,
+    },
     github: {
       host: process.env.GITHUB_SERVICE_HOST || 'localhost',
       port: parseInt(process.env.GITHUB_SERVICE_PORT || '3004', 10),

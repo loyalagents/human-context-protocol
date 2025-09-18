@@ -7,6 +7,7 @@ import * as dotenv from 'dotenv';
 import { GatewayClientService } from './services/gateway-client.service';
 import { PreferenceTools } from './tools/preference.tools';
 import { GitHubTools } from './tools/github.tools';
+import { UserTools } from './tools/user.tools';
 
 // Load environment variables
 dotenv.config();
@@ -16,6 +17,7 @@ class MCPHttpServer {
   private gatewayClient: GatewayClientService;
   private preferenceTools: PreferenceTools;
   private githubTools: GitHubTools;
+  private userTools: UserTools;
   private port: number;
 
   constructor() {
@@ -25,6 +27,7 @@ class MCPHttpServer {
     this.gatewayClient = new GatewayClientService();
     this.preferenceTools = new PreferenceTools(this.gatewayClient);
     this.githubTools = new GitHubTools(this.gatewayClient);
+    this.userTools = new UserTools(this.gatewayClient);
 
     this.setupMiddleware();
     this.setupRoutes();
@@ -75,7 +78,8 @@ class MCPHttpServer {
               result: {
                 tools: [
                   ...this.preferenceTools.getTools(),
-                  ...this.githubTools.getTools()
+                  ...this.githubTools.getTools(),
+                  ...this.userTools.getTools()
                 ]
               }
             };
@@ -90,6 +94,9 @@ class MCPHttpServer {
               // Route to appropriate tool handler based on tool name
               if (name.startsWith('get_github_') || name.startsWith('get_user_repos')) {
                 result = await this.githubTools.handleToolCall(name, args);
+              } else if (name.startsWith('create_user') || name.startsWith('get_user') || name.startsWith('update_user') ||
+                         name.startsWith('deactivate_user') || name.startsWith('list_users') || name.startsWith('record_user_login')) {
+                result = await this.userTools.handleToolCall(name, args);
               } else {
                 result = await this.preferenceTools.handleToolCall(name, args);
               }

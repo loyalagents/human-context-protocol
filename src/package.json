@@ -10,9 +10,10 @@
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces",
     "lint": "npm run lint --workspaces",
-    "dev": "concurrently \"npm run dev --workspace=@personal-context-router/preference-service\" \"npm run dev --workspace=@personal-context-router/gateway\" \"npm run dev --workspace=@personal-context-router/mcp-service\" \"npm run dev --workspace=@personal-context-router/github-import-service\"",
+    "dev": "concurrently \"npm run dev --workspace=@personal-context-router/preference-service\" \"npm run dev --workspace=@personal-context-router/user-service\" \"npm run dev --workspace=@personal-context-router/gateway\" \"npm run dev --workspace=@personal-context-router/mcp-service\" \"npm run dev --workspace=@personal-context-router/github-import-service\"",
     "dev:gateway": "npm run dev --workspace=@personal-context-router/gateway",
     "dev:preference": "npm run dev --workspace=@personal-context-router/preference-service",
+    "dev:user": "npm run dev --workspace=@personal-context-router/user-service",
     "dev:mcp": "npm run dev --workspace=@personal-context-router/mcp-service",
     "dev:github": "npm run dev --workspace=@personal-context-router/github-import-service",
     "start": "npm run start --workspaces --parallel",
@@ -25,13 +26,16 @@
     "@types/node": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
+    "concurrently": "^8.0.0",
     "eslint": "^8.0.0",
-    "typescript": "^5.0.0",
     "ts-node": "^10.0.0",
     "tsconfig-paths": "^4.0.0",
-    "concurrently": "^8.0.0"
+    "typescript": "^5.0.0"
   },
   "engines": {
     "node": ">=22.0.0"
+  },
+  "dependencies": {
+    "mongodb": "^6.20.0"
   }
 }
