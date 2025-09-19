@@ -1,4 +1,4 @@
-import { Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { Tool } from '@modelcontextprotocol/sdk/types.js' with { "resolution-mode": "import" };
 import { GatewayClientService } from '../services/gateway-client.service';
 
 export class GitHubTools {

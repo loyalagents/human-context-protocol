@@ -1,21 +1,20 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "target": "ES2020",
-    "moduleResolution": "node10",
-    "ignoreDeprecations": "6.0",
-    "declaration": false,
+    "target": "ES2022",
+    "module": "Node16",
+    "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
-    "target": "ES2020",
+    "esModuleInterop": true,
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
     "baseUrl": "./",
-    "moduleResolution": "node",
+    "moduleResolution": "node16",
     "incremental": true,
+    "composite": true,
     "skipLibCheck": true,
     "strict": false,
     "paths": {
@@ -30,5 +29,8 @@
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["dist", "node_modules", "**/*.test.ts", "**/*.spec.ts"]
+  "exclude": ["dist", "node_modules", "**/*.test.ts", "**/*.spec.ts"],
+  "references": [
+    { "path": "../shared" }
+  ]
 }

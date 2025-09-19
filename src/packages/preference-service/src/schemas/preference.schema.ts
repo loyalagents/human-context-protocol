@@ -1,18 +1,18 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { HydratedDocument } from 'mongoose';
 
-export type PreferenceDocument = Preference & Document;
+export type PreferenceDocument = HydratedDocument<Preference>;
 
 @Schema({ timestamps: true })
 export class Preference {
   @Prop({ required: true })
-  userId: string;
+  userId!: string;
 
   @Prop({ required: true })
-  key: string;
+  key!: string;
 
   @Prop({ type: Object, required: true })
-  data: any;
+  data!: any;
 
   // These will be automatically added by timestamps: true
   createdAt?: Date;

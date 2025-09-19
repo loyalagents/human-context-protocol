@@ -1,9 +1,7 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "target": "ES2020",
-    "moduleResolution": "node",
-    "declaration": false,
+    "target": "ES2022",
+    "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
@@ -13,7 +11,10 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "baseUrl": "./",
+    "module": "Node16",
+    "moduleResolution": "node16",
     "incremental": true,
+    "composite": true,
     "skipLibCheck": true,
     "strict": false,
     "paths": {

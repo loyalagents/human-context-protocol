@@ -8,7 +8,7 @@ import { Preference, PreferenceSchema } from '../../schemas/preference.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Preference.name, schema: PreferenceSchema }])
+    MongooseModule.forFeature([{ name: Preference.name, schema: PreferenceSchema }]),
   ],
   controllers: [PreferenceController, PreferenceMicroserviceController],
   providers: [PreferenceService, PreferenceRepository],

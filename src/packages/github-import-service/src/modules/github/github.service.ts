@@ -21,7 +21,8 @@ export class GitHubService {
       });
       return response.data;
     } catch (error) {
-      throw new Error(`Failed to fetch repo: ${error.message}`);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to fetch repo: ${message}`);
     }
   }
 
@@ -35,7 +36,8 @@ export class GitHubService {
       });
       return response.data;
     } catch (error) {
-      throw new Error(`Failed to fetch user repos: ${error.message}`);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to fetch user repos: ${message}`);
     }
   }
 }
