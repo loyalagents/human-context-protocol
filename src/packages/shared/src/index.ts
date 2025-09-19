@@ -12,6 +12,7 @@ export * from './decorators/api-response.decorator';
 
 // Utils
 export * from './utils/logger';
+export * from './utils/transform';
 
 // Schemas (Zod - keeping for validation)
 export * from './schemas/preference';

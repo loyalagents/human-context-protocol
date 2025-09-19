@@ -1,5 +1,7 @@
 import { IsString, IsNotEmpty, IsEmail, IsOptional, IsBoolean, IsMongoId } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { stringToBoolean } from '../utils/transform';
 
 export class CreateUserDto {
   @ApiProperty({
@@ -81,6 +83,7 @@ export class UserFilterDto {
     description: 'Filter by active status',
     example: true
   })
+  @Transform(({ value }) => stringToBoolean(value))
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
