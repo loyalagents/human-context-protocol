@@ -255,6 +255,198 @@ export class LocationTools {
           },
           required: ['userId', 'locationKey']
         }
+      },
+      {
+        name: 'get_default_food_preferences',
+        description: 'Get the user\'s default food preferences (global preferences)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            userId: {
+              type: 'string',
+              description: 'The user ID to get food preferences for'
+            }
+          },
+          required: ['userId']
+        }
+      },
+      {
+        name: 'set_default_food_preferences',
+        description: 'Set or update the user\'s default food preferences',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            userId: {
+              type: 'string',
+              description: 'The user ID to set food preferences for'
+            },
+            preferences: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  category: {
+                    type: 'string',
+                    enum: ['italian', 'chinese', 'mexican', 'american', 'indian', 'japanese', 'thai', 'mediterranean', 'fast_food', 'healthy', 'vegetarian', 'vegan', 'pizza', 'seafood', 'bbq', 'coffee', 'dessert'],
+                    description: 'Food category'
+                  },
+                  level: {
+                    type: 'string',
+                    enum: ['love', 'like', 'neutral', 'dislike', 'hate'],
+                    description: 'Preference level'
+                  }
+                },
+                required: ['category', 'level']
+              },
+              description: 'Array of food preferences to set'
+            }
+          },
+          required: ['userId', 'preferences']
+        }
+      },
+      {
+        name: 'update_default_food_preference',
+        description: 'Update a single default food preference',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            userId: {
+              type: 'string',
+              description: 'The user ID to update food preferences for'
+            },
+            category: {
+              type: 'string',
+              enum: ['italian', 'chinese', 'mexican', 'american', 'indian', 'japanese', 'thai', 'mediterranean', 'fast_food', 'healthy', 'vegetarian', 'vegan', 'pizza', 'seafood', 'bbq', 'coffee', 'dessert'],
+              description: 'Food category to update'
+            },
+            level: {
+              type: 'string',
+              enum: ['love', 'like', 'neutral', 'dislike', 'hate'],
+              description: 'New preference level'
+            }
+          },
+          required: ['userId', 'category', 'level']
+        }
+      },
+      {
+        name: 'get_location_food_preferences',
+        description: 'Get food preferences that override defaults for a specific location',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            userId: {
+              type: 'string',
+              description: 'The user ID who owns the location'
+            },
+            locationKey: {
+              type: 'string',
+              description: 'The location key to get food preferences for'
+            }
+          },
+          required: ['userId', 'locationKey']
+        }
+      },
+      {
+        name: 'set_location_food_preferences',
+        description: 'Set food preferences that override defaults when at this location',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            userId: {
+              type: 'string',
+              description: 'The user ID who owns the location'
+            },
+            locationKey: {
+              type: 'string',
+              description: 'The location key to set food preferences for'
+            },
+            preferences: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  category: {
+                    type: 'string',
+                    enum: ['italian', 'chinese', 'mexican', 'american', 'indian', 'japanese', 'thai', 'mediterranean', 'fast_food', 'healthy', 'vegetarian', 'vegan', 'pizza', 'seafood', 'bbq', 'coffee', 'dessert'],
+                    description: 'Food category'
+                  },
+                  level: {
+                    type: 'string',
+                    enum: ['love', 'like', 'neutral', 'dislike', 'hate'],
+                    description: 'Preference level'
+                  }
+                },
+                required: ['category', 'level']
+              },
+              description: 'Array of food preferences to set for this location'
+            }
+          },
+          required: ['userId', 'locationKey', 'preferences']
+        }
+      },
+      {
+        name: 'update_location_food_preference',
+        description: 'Update a single food preference for a specific location',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            userId: {
+              type: 'string',
+              description: 'The user ID who owns the location'
+            },
+            locationKey: {
+              type: 'string',
+              description: 'The location key to update food preferences for'
+            },
+            category: {
+              type: 'string',
+              enum: ['italian', 'chinese', 'mexican', 'american', 'indian', 'japanese', 'thai', 'mediterranean', 'fast_food', 'healthy', 'vegetarian', 'vegan', 'pizza', 'seafood', 'bbq', 'coffee', 'dessert'],
+              description: 'Food category to update'
+            },
+            level: {
+              type: 'string',
+              enum: ['love', 'like', 'neutral', 'dislike', 'hate'],
+              description: 'New preference level'
+            }
+          },
+          required: ['userId', 'locationKey', 'category', 'level']
+        }
+      },
+      {
+        name: 'delete_location_food_preferences',
+        description: 'Delete location-specific food preferences (reverts to defaults)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            userId: {
+              type: 'string',
+              description: 'The user ID who owns the location'
+            },
+            locationKey: {
+              type: 'string',
+              description: 'The location key to delete food preferences for'
+            }
+          },
+          required: ['userId', 'locationKey']
+        }
+      },
+      {
+        name: 'get_effective_food_preferences',
+        description: 'Get effective food preferences for a user, optionally at a specific location (combines defaults with location overrides)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            userId: {
+              type: 'string',
+              description: 'The user ID to get effective preferences for'
+            },
+            locationKey: {
+              type: 'string',
+              description: 'Optional location key to get location-specific effective preferences'
+            }
+          },
+          required: ['userId']
+        }
       }
     ];
   }
@@ -284,6 +476,30 @@ export class LocationTools {
 
       case 'mark_location_as_used':
         return this.markLocationAsUsed(args.userId, args.locationKey);
+
+      case 'get_default_food_preferences':
+        return this.getDefaultFoodPreferences(args.userId);
+
+      case 'set_default_food_preferences':
+        return this.setDefaultFoodPreferences(args.userId, args.preferences);
+
+      case 'update_default_food_preference':
+        return this.updateDefaultFoodPreference(args.userId, args.category, args.level);
+
+      case 'get_location_food_preferences':
+        return this.getLocationFoodPreferences(args.userId, args.locationKey);
+
+      case 'set_location_food_preferences':
+        return this.setLocationFoodPreferences(args.userId, args.locationKey, args.preferences);
+
+      case 'update_location_food_preference':
+        return this.updateLocationFoodPreference(args.userId, args.locationKey, args.category, args.level);
+
+      case 'delete_location_food_preferences':
+        return this.deleteLocationFoodPreferences(args.userId, args.locationKey);
+
+      case 'get_effective_food_preferences':
+        return this.getEffectiveFoodPreferences(args.userId, args.locationKey);
 
       default:
         throw new Error(`Unknown location tool: ${name}`);
@@ -323,5 +539,39 @@ export class LocationTools {
 
   private async markLocationAsUsed(userId: string, locationKey: string): Promise<any> {
     return await this.gatewayClient.markLocationAsUsed(userId, locationKey);
+  }
+
+  // Food Preference Methods
+
+  private async getDefaultFoodPreferences(userId: string): Promise<any> {
+    return await this.gatewayClient.getDefaultFoodPreferences(userId);
+  }
+
+  private async setDefaultFoodPreferences(userId: string, preferences: any[]): Promise<any> {
+    return await this.gatewayClient.setDefaultFoodPreferences(userId, { preferences });
+  }
+
+  private async updateDefaultFoodPreference(userId: string, category: string, level: string): Promise<any> {
+    return await this.gatewayClient.updateDefaultFoodPreference(userId, { category, level });
+  }
+
+  private async getLocationFoodPreferences(userId: string, locationKey: string): Promise<any> {
+    return await this.gatewayClient.getLocationFoodPreferences(userId, locationKey);
+  }
+
+  private async setLocationFoodPreferences(userId: string, locationKey: string, preferences: any[]): Promise<any> {
+    return await this.gatewayClient.setLocationFoodPreferences(userId, locationKey, { preferences });
+  }
+
+  private async updateLocationFoodPreference(userId: string, locationKey: string, category: string, level: string): Promise<any> {
+    return await this.gatewayClient.updateLocationFoodPreference(userId, locationKey, { category, level });
+  }
+
+  private async deleteLocationFoodPreferences(userId: string, locationKey: string): Promise<any> {
+    return await this.gatewayClient.deleteLocationFoodPreferences(userId, locationKey);
+  }
+
+  private async getEffectiveFoodPreferences(userId: string, locationKey?: string): Promise<any> {
+    return await this.gatewayClient.getEffectiveFoodPreferences(userId, locationKey);
   }
 }

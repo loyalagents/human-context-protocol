@@ -143,3 +143,64 @@ export function extractUserDefinedName(locationKey: string): string | null {
   }
   return null;
 }
+
+// Food Preference Types
+export enum FoodCategory {
+  ITALIAN = 'italian',
+  CHINESE = 'chinese',
+  MEXICAN = 'mexican',
+  AMERICAN = 'american',
+  INDIAN = 'indian',
+  JAPANESE = 'japanese',
+  THAI = 'thai',
+  MEDITERRANEAN = 'mediterranean',
+  FAST_FOOD = 'fast_food',
+  HEALTHY = 'healthy',
+  VEGETARIAN = 'vegetarian',
+  VEGAN = 'vegan',
+  PIZZA = 'pizza',
+  SEAFOOD = 'seafood',
+  BBQ = 'bbq',
+  COFFEE = 'coffee',
+  DESSERT = 'dessert'
+}
+
+export enum PreferenceLevel {
+  LOVE = 'love',           // 5 - Actively seek out
+  LIKE = 'like',           // 4 - Happy to eat
+  NEUTRAL = 'neutral',     // 3 - No strong preference
+  DISLIKE = 'dislike',     // 2 - Avoid if possible
+  HATE = 'hate'            // 1 - Never want
+}
+
+export interface FoodPreference {
+  category: FoodCategory;
+  level: PreferenceLevel;
+}
+
+export interface FoodPreferences {
+  preferences: FoodPreference[];
+  updatedAt: Date;
+}
+
+// Helper functions for food preferences
+export function getPreferenceScore(level: PreferenceLevel): number {
+  switch (level) {
+    case PreferenceLevel.LOVE: return 5;
+    case PreferenceLevel.LIKE: return 4;
+    case PreferenceLevel.NEUTRAL: return 3;
+    case PreferenceLevel.DISLIKE: return 2;
+    case PreferenceLevel.HATE: return 1;
+    default: return 3;
+  }
+}
+
+export function createDefaultFoodPreferences(): FoodPreferences {
+  return {
+    preferences: Object.values(FoodCategory).map(category => ({
+      category,
+      level: PreferenceLevel.NEUTRAL
+    })),
+    updatedAt: new Date()
+  };
+}

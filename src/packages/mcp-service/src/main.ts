@@ -99,7 +99,8 @@ class MCPHttpServer {
               // Check location tools first to avoid conflicts with user tools
               if (name.includes('location') || name.startsWith('create_system_location') || name.startsWith('create_custom_location') ||
                   name.startsWith('update_location') || name.startsWith('delete_location') || name.startsWith('mark_location') ||
-                  name.startsWith('get_available_system_locations') || name.startsWith('get_user_locations')) {
+                  name.startsWith('get_available_system_locations') || name.startsWith('get_user_locations') ||
+                  name.includes('food_preference')) {
                 result = await this.locationTools.handleTool(name, args);
               } else if (name.startsWith('get_github_') || name.startsWith('get_user_repos')) {
                 result = await this.githubTools.handleToolCall(name, args);

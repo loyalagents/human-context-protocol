@@ -12,11 +12,22 @@ Common TypeScript utilities, DTOs, interfaces, and validation schemas for micros
 
 ## Exports
 
-- **DTOs**: `PreferenceDto`, validation-enabled data transfer objects
-- **Interfaces**: `ApiResponseInterface`, `PreferenceInterface`
+### DTOs & Validation
+- **PreferenceDto**: Core preference validation objects
+- **LocationDto**: Location management with system + custom location types
+- **FoodPreferenceDto**: Food preference validation with categories and levels
+- **UserDto**: User management and authentication data objects
+
+### Type Definitions
+- **LocationTypes**: System location types, categories, features, and configuration
+- **FoodPreferenceTypes**: 17 food categories, 5 preference levels, merging logic
+- **ApiInterfaces**: `ApiResponseInterface`, `PreferenceInterface`
+- **BrandedTypes**: Type-safe userId, preferenceId with runtime validation
+
+### Utilities
 - **Decorators**: `@ApiResponse` for Swagger documentation
-- **Utils**: `Logger` utility for consistent logging
-- **Schemas**: Zod validation schemas for runtime checks
+- **Logger**: Centralized logging utility with context support
+- **Schemas**: Zod validation schemas for runtime type checking
 
 ## Architecture
 

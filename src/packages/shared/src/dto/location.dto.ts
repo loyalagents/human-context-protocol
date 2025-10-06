@@ -1,7 +1,7 @@
 import { IsString, IsNumber, IsBoolean, IsOptional, IsArray, IsEnum, ValidateNested, IsObject, Min, Max } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { LocationCategory, LocationFeature, SystemLocationType, Coordinates, LocationData } from '../types/location';
+import { LocationCategory, LocationFeature, SystemLocationType, Coordinates, LocationData, FoodCategory, PreferenceLevel, FoodPreference, FoodPreferences } from '../types/location';
 
 export class CoordinatesDto implements Coordinates {
   @ApiProperty({ description: 'Latitude coordinate', example: 40.7128 })
@@ -216,4 +216,68 @@ export class LocationWithKeyResponseDto extends LocationResponseDto {
 
   @ApiProperty({ description: 'User ID who owns this location' })
   userId!: string;
+}
+
+// Food Preference DTOs
+export class FoodPreferenceDto implements FoodPreference {
+  @ApiProperty({
+    description: 'Food category',
+    enum: FoodCategory,
+    example: 'italian'
+  })
+  @IsEnum(FoodCategory)
+  category!: FoodCategory;
+
+  @ApiProperty({
+    description: 'Preference level for this category',
+    enum: PreferenceLevel,
+    example: 'love'
+  })
+  @IsEnum(PreferenceLevel)
+  level!: PreferenceLevel;
+}
+
+export class SetFoodPreferencesDto {
+  @ApiProperty({
+    description: 'Array of food preferences',
+    type: [FoodPreferenceDto],
+    example: [
+      { category: 'italian', level: 'love' },
+      { category: 'chinese', level: 'like' },
+      { category: 'fast_food', level: 'dislike' }
+    ]
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => FoodPreferenceDto)
+  preferences!: FoodPreferenceDto[];
+}
+
+export class UpdateFoodPreferenceDto {
+  @ApiProperty({
+    description: 'Food category to update',
+    enum: FoodCategory,
+    example: 'italian'
+  })
+  @IsEnum(FoodCategory)
+  category!: FoodCategory;
+
+  @ApiProperty({
+    description: 'New preference level',
+    enum: PreferenceLevel,
+    example: 'love'
+  })
+  @IsEnum(PreferenceLevel)
+  level!: PreferenceLevel;
+}
+
+export class FoodPreferencesResponseDto implements FoodPreferences {
+  @ApiProperty({
+    description: 'Array of food preferences',
+    type: [FoodPreferenceDto]
+  })
+  preferences!: FoodPreference[];
+
+  @ApiProperty({ description: 'Last updated timestamp' })
+  updatedAt!: Date;
 }

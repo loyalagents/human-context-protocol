@@ -86,6 +86,33 @@ export class PreferenceRepository {
       .exec();
   }
 
+  // Enhanced upsert with indexing fields
+  async upsertWithIndexing(
+    userId: UserId,
+    key: string,
+    data: any,
+    locationKey?: string,
+    category?: string,
+    type?: string
+  ): Promise<PreferenceDocument> {
+    const updateFields: any = {
+      data,
+      updatedAt: new Date()
+    };
+
+    if (locationKey !== undefined) updateFields.locationKey = locationKey;
+    if (category !== undefined) updateFields.category = category;
+    if (type !== undefined) updateFields.type = type;
+
+    return this.preferenceModel
+      .findOneAndUpdate(
+        { userId, key },
+        updateFields,
+        { new: true, upsert: true }
+      )
+      .exec();
+  }
+
   // New methods for location-based queries
   async findByUserIdAndLocationKey(userId: UserId, locationKey: string): Promise<PreferenceDocument[]> {
     return this.preferenceModel.find({ userId, locationKey }).exec();

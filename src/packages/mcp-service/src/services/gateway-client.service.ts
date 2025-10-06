@@ -166,4 +166,46 @@ export class GatewayClientService {
     const response = await this.client.post(`/api/locations/${locationKey}/mark-used?userId=${userId}`);
     return response.data;
   }
+
+  // Food Preference API methods
+  async getDefaultFoodPreferences(userId: string): Promise<any> {
+    const response = await this.client.get(`/api/locations/food-preferences/default?userId=${userId}`);
+    return response.data;
+  }
+
+  async setDefaultFoodPreferences(userId: string, dto: any): Promise<any> {
+    const response = await this.client.put(`/api/locations/food-preferences/default?userId=${userId}`, dto);
+    return response.data;
+  }
+
+  async updateDefaultFoodPreference(userId: string, dto: any): Promise<any> {
+    const response = await this.client.patch(`/api/locations/food-preferences/default?userId=${userId}`, dto);
+    return response.data;
+  }
+
+  async getLocationFoodPreferences(userId: string, locationKey: string): Promise<any> {
+    const response = await this.client.get(`/api/locations/${locationKey}/food-preferences?userId=${userId}`);
+    return response.data;
+  }
+
+  async setLocationFoodPreferences(userId: string, locationKey: string, dto: any): Promise<any> {
+    const response = await this.client.put(`/api/locations/${locationKey}/food-preferences?userId=${userId}`, dto);
+    return response.data;
+  }
+
+  async updateLocationFoodPreference(userId: string, locationKey: string, dto: any): Promise<any> {
+    const response = await this.client.patch(`/api/locations/${locationKey}/food-preferences?userId=${userId}`, dto);
+    return response.data;
+  }
+
+  async deleteLocationFoodPreferences(userId: string, locationKey: string): Promise<any> {
+    const response = await this.client.delete(`/api/locations/${locationKey}/food-preferences?userId=${userId}`);
+    return response.data;
+  }
+
+  async getEffectiveFoodPreferences(userId: string, locationKey?: string): Promise<any> {
+    const locationParam = locationKey ? `&locationKey=${locationKey}` : '';
+    const response = await this.client.get(`/api/locations/food-preferences/effective?userId=${userId}${locationParam}`);
+    return response.data;
+  }
 }

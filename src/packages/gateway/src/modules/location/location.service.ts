@@ -9,7 +9,10 @@ import {
   UpdateLocationDto,
   LocationWithKeyResponseDto,
   SystemLocationType,
-  ApiResponse
+  ApiResponse,
+  SetFoodPreferencesDto,
+  UpdateFoodPreferenceDto,
+  FoodPreferencesResponseDto
 } from '@personal-context-router/shared';
 
 @Injectable()
@@ -94,6 +97,80 @@ export class LocationService {
   ): Observable<ApiResponse<null>> {
     return this.httpService
       .post(`${this.preferenceServiceUrl}/locations/${locationKey}/mark-used?userId=${userId}`)
+      .pipe(map(response => response.data));
+  }
+
+  // Food Preference Methods
+
+  getDefaultFoodPreferences(userId: string): Observable<ApiResponse<FoodPreferencesResponseDto>> {
+    return this.httpService
+      .get(`${this.preferenceServiceUrl}/locations/food-preferences/default?userId=${userId}`)
+      .pipe(map(response => response.data));
+  }
+
+  setDefaultFoodPreferences(
+    userId: string,
+    dto: SetFoodPreferencesDto,
+  ): Observable<ApiResponse<FoodPreferencesResponseDto>> {
+    return this.httpService
+      .put(`${this.preferenceServiceUrl}/locations/food-preferences/default?userId=${userId}`, dto)
+      .pipe(map(response => response.data));
+  }
+
+  updateDefaultFoodPreference(
+    userId: string,
+    dto: UpdateFoodPreferenceDto,
+  ): Observable<ApiResponse<FoodPreferencesResponseDto>> {
+    return this.httpService
+      .patch(`${this.preferenceServiceUrl}/locations/food-preferences/default?userId=${userId}`, dto)
+      .pipe(map(response => response.data));
+  }
+
+  getLocationFoodPreferences(
+    userId: string,
+    locationKey: string,
+  ): Observable<ApiResponse<FoodPreferencesResponseDto | null>> {
+    return this.httpService
+      .get(`${this.preferenceServiceUrl}/locations/${locationKey}/food-preferences?userId=${userId}`)
+      .pipe(map(response => response.data));
+  }
+
+  setLocationFoodPreferences(
+    userId: string,
+    locationKey: string,
+    dto: SetFoodPreferencesDto,
+  ): Observable<ApiResponse<FoodPreferencesResponseDto>> {
+    return this.httpService
+      .put(`${this.preferenceServiceUrl}/locations/${locationKey}/food-preferences?userId=${userId}`, dto)
+      .pipe(map(response => response.data));
+  }
+
+  updateLocationFoodPreference(
+    userId: string,
+    locationKey: string,
+    dto: UpdateFoodPreferenceDto,
+  ): Observable<ApiResponse<FoodPreferencesResponseDto>> {
+    return this.httpService
+      .patch(`${this.preferenceServiceUrl}/locations/${locationKey}/food-preferences?userId=${userId}`, dto)
+      .pipe(map(response => response.data));
+  }
+
+  deleteLocationFoodPreferences(
+    userId: string,
+    locationKey: string,
+  ): Observable<ApiResponse<null>> {
+    return this.httpService
+      .delete(`${this.preferenceServiceUrl}/locations/${locationKey}/food-preferences?userId=${userId}`)
+      .pipe(map(response => response.data));
+  }
+
+  getEffectiveFoodPreferences(
+    userId: string,
+    locationKey?: string,
+  ): Observable<ApiResponse<FoodPreferencesResponseDto>> {
+    const locationParam = locationKey ? `&locationKey=${locationKey}` : '';
+    return this.httpService
+      .get(`${this.preferenceServiceUrl}/locations/food-preferences/effective?userId=${userId}${locationParam}`)
       .pipe(map(response => response.data));
   }
 }

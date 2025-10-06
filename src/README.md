@@ -197,6 +197,103 @@ curl -X PUT "http://localhost:3000/api/locations/home?userId=507f1f77bcf86cd7994
 
 **Note**: User IDs must be valid MongoDB ObjectId format (24 hex characters). All location preferences automatically work with the new address when you update a location.
 
+## Food Preference Management
+
+**Context-aware food preferences with default + location-specific overrides.**
+
+### Overview
+
+The food preference system enables users to:
+- Set **default food preferences** (global across all locations)
+- Override preferences **per location** (e.g., healthy food at work, comfort food at home)
+- Get **effective preferences** that automatically merge defaults + location overrides
+- Support **17 food categories** with **5 preference levels** each
+
+**Food Categories**: italian, chinese, mexican, american, indian, japanese, thai, mediterranean, fast_food, healthy, vegetarian, vegan, pizza, seafood, bbq, coffee, dessert
+
+**Preference Levels**: love (5), like (4), neutral (3), dislike (2), hate (1)
+
+### Key Features
+
+- **Per-user defaults**: Each user has their own default preferences (not global)
+- **Location overrides**: Different preferences when at specific locations
+- **Smart merging**: Effective preferences combine defaults + location overrides
+- **Auto-initialization**: New users get neutral defaults for all categories
+- **Persistent storage**: Preferences persist across sessions once set
+
+### API Examples
+
+**Set default food preferences (global):**
+```bash
+curl -X PUT "http://localhost:3000/api/locations/food-preferences/default?userId=507f1f77bcf86cd799439011" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "preferences": [
+      {"category": "italian", "level": "love"},
+      {"category": "fast_food", "level": "dislike"},
+      {"category": "healthy", "level": "like"}
+    ]
+  }'
+```
+
+**Override preferences for work location:**
+```bash
+curl -X PUT "http://localhost:3000/api/locations/work/food-preferences?userId=507f1f77bcf86cd799439011" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "preferences": [
+      {"category": "healthy", "level": "love"},
+      {"category": "fast_food", "level": "hate"}
+    ]
+  }'
+```
+
+**Get effective preferences at work (merges defaults + work overrides):**
+```bash
+curl "http://localhost:3000/api/locations/food-preferences/effective?userId=507f1f77bcf86cd799439011&locationKey=work"
+```
+
+**Update a single preference:**
+```bash
+curl -X PATCH "http://localhost:3000/api/locations/food-preferences/default?userId=507f1f77bcf86cd799439011" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "category": "pizza",
+    "level": "love"
+  }'
+```
+
+**Get default preferences:**
+```bash
+curl "http://localhost:3000/api/locations/food-preferences/default?userId=507f1f77bcf86cd799439011"
+```
+
+### MCP Tools for Claude
+
+The food preference system includes 7 MCP tools for Claude AI integration:
+
+- `get_default_food_preferences` - Get user's global food preferences
+- `set_default_food_preferences` - Set multiple global preferences
+- `update_default_food_preference` - Update single global preference
+- `get_location_food_preferences` - Get location-specific overrides
+- `set_location_food_preferences` - Set location-specific overrides
+- `update_location_food_preference` - Update single location preference
+- `get_effective_food_preferences` - Get merged final preferences (with optional location)
+
+**Example Claude usage:**
+```
+"Set my default food preferences to love Italian and hate fast food"
+"When I'm at work, I prefer healthy food and want to avoid fast food even more"
+"What are my effective food preferences when I'm at home?"
+```
+
+### Use Cases
+
+- **Context-aware recommendations**: Claude can suggest restaurants based on location + preferences
+- **Dietary tracking**: Different eating habits at different locations
+- **Smart ordering**: Automatic preference application based on current location
+- **Personal insights**: Understanding food preference patterns across locations
+
 ### Claude Integration
 
 To use the MCP service with Claude Desktop:
