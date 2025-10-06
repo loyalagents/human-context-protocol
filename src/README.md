@@ -216,11 +216,260 @@ packages/
 
 ### Adding New Services
 
-1. Create new package directory under `packages/`
-2. Add package.json with workspace reference
-3. Create TypeScript config extending root config
-4. Add service reference to root tsconfig.json
-5. Update gateway proxy routes if needed
+When creating a new service, follow these steps to ensure proper integration:
+
+#### 1. Create Service Directory Structure
+```bash
+mkdir packages/your-service-name
+cd packages/your-service-name
+
+# Create basic NestJS structure
+mkdir src src/controllers src/services src/schemas src/dto
+touch src/main.ts src/app.module.ts
+```
+
+#### 2. Create package.json
+Create `packages/your-service-name/package.json`:
+```json
+{
+  "name": "@personal-context-router/your-service-name",
+  "version": "1.0.0",
+  "description": "Description of your service",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "nest build",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "start": "nest start",
+    "dev": "nest start --watch",
+    "start:debug": "nest start --debug --watch",
+    "start:prod": "node dist/main",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
+  },
+  "dependencies": {
+    "@personal-context-router/shared": "*",
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/core": "^10.0.0",
+    "@nestjs/platform-express": "^10.0.0",
+    "@nestjs/microservices": "^10.0.0",
+    "@nestjs/swagger": "^7.0.0",
+    "@nestjs/config": "^3.0.0",
+    "reflect-metadata": "^0.1.13",
+    "rxjs": "^7.8.0",
+    "class-validator": "^0.14.0",
+    "class-transformer": "^0.5.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.0",
+    "@types/jest": "^29.0.0",
+    "jest": "^29.0.0",
+    "ts-jest": "^29.0.0",
+    "supertest": "^6.3.0",
+    "@types/supertest": "^6.0.0"
+  }
+}
+```
+
+#### 3. Create TypeScript Configuration
+Create `packages/your-service-name/tsconfig.json`:
+```json
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
+}
+```
+
+Create `packages/your-service-name/tsconfig.build.json`:
+```json
+{
+  "extends": "./tsconfig.json",
+  "exclude": ["node_modules", "test", "dist", "**/*spec.ts", "**/*test.ts"]
+}
+```
+
+#### 4. Create Dockerfile
+Create `packages/your-service-name/Dockerfile`:
+```dockerfile
+FROM node:22.19-bookworm-slim
+
+WORKDIR /app
+
+# Copy package files for dependency installation
+COPY package*.json ./
+COPY packages/your-service-name/package*.json ./packages/your-service-name/
+COPY packages/shared/package*.json ./packages/shared/
+
+# Install all dependencies for workspaces
+RUN npm ci --workspaces --include-workspace-root
+
+# Copy source code
+COPY packages/shared ./packages/shared
+COPY packages/your-service-name ./packages/your-service-name
+COPY tsconfig.json ./
+
+# Build shared package first
+RUN npx tsc -b packages/shared/tsconfig.json --clean && \
+    npm run build --workspace=@personal-context-router/shared -- --force
+
+# Build the service
+RUN npx tsc -b packages/your-service-name/tsconfig.build.json --clean && \
+    npx tsc -b packages/your-service-name/tsconfig.build.json
+
+# Expose ports (HTTP + microservice if needed)
+EXPOSE 3XXX 3XXY
+
+# Start the service
+CMD ["npm", "run", "start:prod", "--workspace=@personal-context-router/your-service-name"]
+```
+
+#### 5. Update Root Configuration Files
+
+**Update `tsconfig.json` - Add to references array:**
+```json
+{
+  "references": [
+    { "path": "./packages/shared" },
+    { "path": "./packages/gateway" },
+    { "path": "./packages/preference-service" },
+    { "path": "./packages/user-service" },
+    { "path": "./packages/mcp-service" },
+    { "path": "./packages/your-service-name" }
+  ]
+}
+```
+
+**Update `package.json` - Add development script:**
+```json
+{
+  "scripts": {
+    "dev:your-service": "npm run dev --workspace=@personal-context-router/your-service-name"
+  }
+}
+```
+
+#### 6. Update Docker Compose
+Add your service to `docker-compose.yml`:
+```yaml
+services:
+  your-service-name:
+    build:
+      context: .
+      dockerfile: packages/your-service-name/Dockerfile
+    container_name: your-service-name
+    restart: unless-stopped
+    ports:
+      - "3XXX:3XXX"  # HTTP port
+      - "3XXY:3XXY"  # Microservice port (if needed)
+    command: npm run start:prod --workspace=@personal-context-router/your-service-name
+    environment:
+      - PORT=3XXX
+      - MICROSERVICE_PORT=3XXY  # If needed
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://mongodb:27017/personal-context-router  # If using MongoDB
+    depends_on:
+      - mongodb  # Add other dependencies as needed
+```
+
+#### 7. Update Gateway Configuration
+If your service needs to be accessible via the gateway:
+
+1. **Add environment variables** to gateway service in `docker-compose.yml`:
+```yaml
+gateway:
+  environment:
+    - YOUR_SERVICE_HOST=your-service-name
+    - YOUR_SERVICE_PORT=3XXY
+```
+
+2. **Update gateway dependencies:**
+```yaml
+gateway:
+  depends_on:
+    - your-service-name
+```
+
+3. **Add proxy routes** in gateway service code
+
+#### 8. Create Basic Service Implementation
+Create `packages/your-service-name/src/main.ts`:
+```typescript
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  await app.listen(process.env.PORT || 3XXX);
+}
+bootstrap();
+```
+
+Create `packages/your-service-name/src/app.module.ts`:
+```typescript
+import { Module } from '@nestjs/common';
+
+@Module({
+  imports: [],
+  controllers: [],
+  providers: [],
+})
+export class AppModule {}
+```
+
+#### 9. Install Dependencies
+```bash
+# Install dependencies for the new service
+npm install
+
+# Install any additional dependencies needed
+npm install --workspace=@personal-context-router/your-service-name package-name
+```
+
+#### 10. Update Documentation and Configuration
+- Update this README if the service adds new functionality
+- Update `architecture.md` with service details
+- Add Swagger documentation for API endpoints
+- Ensure the service is only accessible via the gateway (unless it's MCP service)
+- Update `CLAUDE.md` conventions file if needed
+
+#### 11. Test the Service
+```bash
+# Build and test
+npm run build
+npm run test
+
+# Test with Docker
+docker-compose up --build your-service-name
+
+# Verify the service is accessible
+curl http://localhost:3XXX/health
+```
+
+#### Port Allocation Guidelines
+Current port assignments:
+- Gateway: 3000
+- Preference Service: 3001 (HTTP), 3002 (microservice)
+- MCP Service: 3003
+- GitHub Import Service: 3004 (internal only)
+- User Service: 3015 (HTTP), 3016 (microservice)
+
+**Choose available ports in the 3000-3999 range for new services.**
+
+#### Important Notes
+- All services except MCP service should only be accessible via the gateway
+- Follow existing code patterns and conventions in other services
+- Use the shared package for common utilities and types
+- Update Swagger documentation for any new API endpoints
+- Ensure proper error handling and logging
+- Add health check endpoints for monitoring
 
 ## Live Reload Options
 
