@@ -1,6 +1,7 @@
 // NestJS DTOs
 export * from './dto/preference.dto';
 export * from './dto/user.dto';
+export * from './dto/location.dto';
 
 // Interfaces
 export * from './interfaces/api-response.interface';
@@ -22,6 +23,7 @@ export * from './branded-types';
 
 // Common types
 export * from './types/common';
+export * from './types/location';
 
 // Legacy types (re-exported with explicit names to avoid conflicts)
 export {

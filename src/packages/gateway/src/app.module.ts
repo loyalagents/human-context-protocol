@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { HealthModule } from './modules/health/health.module';
 import { PreferenceModule } from './modules/preference/preference.module';
+import { LocationModule } from './modules/location/location.module';
 import { GitHubModule } from './modules/github/github.module';
 import { UserModule } from './modules/user/user.module';
 import configuration from './config/configuration';
@@ -19,6 +20,7 @@ import configuration from './config/configuration';
     }]),
     HealthModule,
     PreferenceModule,
+    LocationModule,
     GitHubModule,
     UserModule,
   ],

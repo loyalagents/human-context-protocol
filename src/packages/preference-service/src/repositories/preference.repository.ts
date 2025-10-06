@@ -10,11 +10,21 @@ export class PreferenceRepository {
     @InjectModel(Preference.name) private preferenceModel: Model<PreferenceDocument>,
   ) {}
 
-  async create(userId: UserId, key: string, data: any): Promise<PreferenceDocument> {
+  async create(
+    userId: UserId,
+    key: string,
+    data: any,
+    locationKey?: string,
+    category?: string,
+    type?: string
+  ): Promise<PreferenceDocument> {
     const preference = new this.preferenceModel({
       userId,
       key,
       data,
+      locationKey,
+      category,
+      type,
     });
     return preference.save();
   }
@@ -74,5 +84,27 @@ export class PreferenceRepository {
         { new: true, upsert: true }
       )
       .exec();
+  }
+
+  // New methods for location-based queries
+  async findByUserIdAndLocationKey(userId: UserId, locationKey: string): Promise<PreferenceDocument[]> {
+    return this.preferenceModel.find({ userId, locationKey }).exec();
+  }
+
+  async findByUserIdAndType(userId: UserId, type: string): Promise<PreferenceDocument[]> {
+    return this.preferenceModel.find({ userId, type }).exec();
+  }
+
+  async findByUserIdLocationAndCategory(
+    userId: UserId,
+    locationKey: string,
+    category: string
+  ): Promise<PreferenceDocument[]> {
+    return this.preferenceModel.find({ userId, locationKey, category }).exec();
+  }
+
+  // Query preferences by key pattern (for backward compatibility with regex searches)
+  async findByUserIdAndKeyPattern(userId: UserId, pattern: RegExp): Promise<PreferenceDocument[]> {
+    return this.preferenceModel.find({ userId, key: { $regex: pattern } }).exec();
   }
 }

@@ -8,6 +8,7 @@ import { GatewayClientService } from './services/gateway-client.service';
 import { PreferenceTools } from './tools/preference.tools';
 import { GitHubTools } from './tools/github.tools';
 import { UserTools } from './tools/user.tools';
+import { LocationTools } from './tools/location.tools';
 
 // Load environment variables
 dotenv.config();
@@ -18,6 +19,7 @@ class MCPHttpServer {
   private preferenceTools: PreferenceTools;
   private githubTools: GitHubTools;
   private userTools: UserTools;
+  private locationTools: LocationTools;
   private port: number;
 
   constructor() {
@@ -28,6 +30,7 @@ class MCPHttpServer {
     this.preferenceTools = new PreferenceTools(this.gatewayClient);
     this.githubTools = new GitHubTools(this.gatewayClient);
     this.userTools = new UserTools(this.gatewayClient);
+    this.locationTools = new LocationTools(this.gatewayClient);
 
     this.setupMiddleware();
     this.setupRoutes();
@@ -79,7 +82,8 @@ class MCPHttpServer {
                 tools: [
                   ...this.preferenceTools.getTools(),
                   ...this.githubTools.getTools(),
-                  ...this.userTools.getTools()
+                  ...this.userTools.getTools(),
+                  ...this.locationTools.getTools()
                 ]
               }
             };
@@ -92,7 +96,12 @@ class MCPHttpServer {
               let result;
 
               // Route to appropriate tool handler based on tool name
-              if (name.startsWith('get_github_') || name.startsWith('get_user_repos')) {
+              // Check location tools first to avoid conflicts with user tools
+              if (name.includes('location') || name.startsWith('create_system_location') || name.startsWith('create_custom_location') ||
+                  name.startsWith('update_location') || name.startsWith('delete_location') || name.startsWith('mark_location') ||
+                  name.startsWith('get_available_system_locations') || name.startsWith('get_user_locations')) {
+                result = await this.locationTools.handleTool(name, args);
+              } else if (name.startsWith('get_github_') || name.startsWith('get_user_repos')) {
                 result = await this.githubTools.handleToolCall(name, args);
               } else if (name.startsWith('create_user') || name.startsWith('get_user') || name.startsWith('update_user') ||
                          name.startsWith('deactivate_user') || name.startsWith('list_users') || name.startsWith('record_user_login')) {

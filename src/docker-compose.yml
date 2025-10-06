@@ -63,6 +63,7 @@ services:
       - NODE_ENV=development
       - PREFERENCE_SERVICE_HOST=preference-service
       - PREFERENCE_SERVICE_PORT=3002
+      - PREFERENCE_SERVICE_URL=http://preference-service:3001
       - USER_SERVICE_HOST=user-service
       - USER_SERVICE_PORT=3016
       - GITHUB_SERVICE_HOST=github-import-service

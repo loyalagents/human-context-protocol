@@ -7,6 +7,7 @@
 This system allows Claude Desktop to:
 - Manage user accounts and authentication
 - Store and retrieve user preferences across sessions
+- **Manage user locations** (home, work, custom places) for context-aware recommendations
 - Access GitHub repository and user data
 - Maintain persistent context for personalized interactions
 
@@ -67,6 +68,7 @@ Changes you make to code on your host are picked up immediately in this local (n
 - Health check: `GET /health`
 - Swagger docs: `GET /api/docs`
 - API routes: `GET /api/preferences/*` (communicates with preference microservice via TCP)
+- Location API routes: `GET /api/locations/*` (proxies to Preference Service HTTP API)
 - GitHub API routes: `GET /api/github/*` (proxies to GitHub Import Service via HTTP)
 
 **Preference Service**: `http://localhost:3001`  
@@ -134,6 +136,67 @@ Get a user's repositories:
 curl "http://localhost:3000/api/github/user/octocat/repos"
 ```
 
+### Location Management
+
+The system includes comprehensive location management for context-aware features. Users can manage both system locations (home, work, gym, school) and custom locations.
+
+**Get all locations for a user:**
+```bash
+curl "http://localhost:3000/api/locations?userId=507f1f77bcf86cd799439011"
+```
+
+**Create a system location (home):**
+```bash
+curl -X POST "http://localhost:3000/api/locations/system?userId=507f1f77bcf86cd799439011" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "locationType": "home",
+    "address": "123 Main Street, Anytown, ST 12345",
+    "coordinates": {
+      "lat": 40.7128,
+      "lng": -74.0060
+    },
+    "nickname": "My Home"
+  }'
+```
+
+**Create a custom location:**
+```bash
+curl -X POST "http://localhost:3000/api/locations/custom?userId=507f1f77bcf86cd799439011" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "locationName": "moms_house",
+    "address": "456 Family Street, Hometown, ST 67890",
+    "coordinates": {
+      "lat": 41.1234,
+      "lng": -75.5678
+    },
+    "nickname": "Mom'\''s House",
+    "category": "residence",
+    "features": ["food_preferences", "delivery_support"]
+  }'
+```
+
+**Get available system location types:**
+```bash
+curl "http://localhost:3000/api/locations/available-system?userId=507f1f77bcf86cd799439011"
+```
+
+**Update a location (when you move):**
+```bash
+curl -X PUT "http://localhost:3000/api/locations/home?userId=507f1f77bcf86cd799439011" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "789 New Street, Different City, ST 98765",
+    "coordinates": {
+      "lat": 42.3601,
+      "lng": -71.0589
+    }
+  }'
+```
+
+**Note**: User IDs must be valid MongoDB ObjectId format (24 hex characters). All location preferences automatically work with the new address when you update a location.
+
 ### Claude Integration
 
 To use the MCP service with Claude Desktop:
@@ -157,6 +220,16 @@ To use the MCP service with Claude Desktop:
    - `update_preference(userId, key, value)` - Update existing preference
    - `delete_preference(userId, key)` - Delete preference
    - `list_preference_keys(userId)` - List all preference keys
+
+   **Location Tools:**
+   - `get_user_locations(userId, type?)` - Get all/filtered locations for a user
+   - `get_location(userId, locationKey)` - Get specific location details
+   - `create_system_location(userId, locationType, address, coordinates, nickname?, notes?)` - Create home/work/gym/school
+   - `create_custom_location(userId, locationName, address, coordinates, nickname, category, features)` - Create custom location
+   - `update_location(userId, locationKey, address?, coordinates?, nickname?, notes?)` - Update location details
+   - `delete_location(userId, locationKey)` - Remove a location
+   - `get_available_system_locations(userId)` - Get system location types not yet created
+   - `mark_location_as_used(userId, locationKey)` - Update last used timestamp
 
    **GitHub Tools:**
    - `get_github_repo(owner, repo)` - Get detailed information about a specific GitHub repository

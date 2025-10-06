@@ -122,4 +122,48 @@ export class GatewayClientService {
     const response = await this.client.get<UserResponse[]>('/api/users');
     return response.data;
   }
+
+  // Location API methods
+  async getUserLocations(userId: string, type?: string): Promise<any> {
+    const url = type
+      ? `/api/locations?userId=${userId}&type=${type}`
+      : `/api/locations?userId=${userId}`;
+    const response = await this.client.get(url);
+    return response.data;
+  }
+
+  async getLocation(userId: string, locationKey: string): Promise<any> {
+    const response = await this.client.get(`/api/locations/${locationKey}?userId=${userId}`);
+    return response.data;
+  }
+
+  async createSystemLocation(userId: string, createDto: any): Promise<any> {
+    const response = await this.client.post(`/api/locations/system?userId=${userId}`, createDto);
+    return response.data;
+  }
+
+  async createCustomLocation(userId: string, createDto: any): Promise<any> {
+    const response = await this.client.post(`/api/locations/custom?userId=${userId}`, createDto);
+    return response.data;
+  }
+
+  async updateLocation(userId: string, locationKey: string, updateDto: any): Promise<any> {
+    const response = await this.client.put(`/api/locations/${locationKey}?userId=${userId}`, updateDto);
+    return response.data;
+  }
+
+  async deleteLocation(userId: string, locationKey: string): Promise<any> {
+    const response = await this.client.delete(`/api/locations/${locationKey}?userId=${userId}`);
+    return response.data;
+  }
+
+  async getAvailableSystemLocations(userId: string): Promise<any> {
+    const response = await this.client.get(`/api/locations/available-system?userId=${userId}`);
+    return response.data;
+  }
+
+  async markLocationAsUsed(userId: string, locationKey: string): Promise<any> {
+    const response = await this.client.post(`/api/locations/${locationKey}/mark-used?userId=${userId}`);
+    return response.data;
+  }
 }
