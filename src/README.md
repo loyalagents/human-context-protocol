@@ -13,10 +13,11 @@ This system allows Claude Desktop to:
 
 ## Architecture
 
-**5 interconnected NestJS services:**
+**6 interconnected NestJS services:**
 
-- **Gateway** (`packages/gateway`): API router with rate limiting and validation
-- **Preference Service** (`packages/preference-service`): MongoDB-backed preference storage (HTTP + TCP)  
+- **Gateway** (`packages/gateway`): API router with authentication, rate limiting and validation
+- **Auth Service** (`packages/auth-service`): Simple authentication for cloud deployment protection
+- **Preference Service** (`packages/preference-service`): MongoDB-backed preference storage (HTTP + TCP)
 - **GitHub Import Service** (`packages/github-import-service`): GitHub API integration via Octokit
 - **MCP Service** (`packages/mcp-service`): Claude integration via Model Context Protocol
 - **Shared** (`packages/shared`): Common types, DTOs, and utilities
@@ -50,6 +51,64 @@ Note: in this default configuration, containers run compiled code (no live reloa
 - MongoDB: localhost:27017
 
 **Note**: GitHub Import Service is only accessible via the Gateway at `/api/github/*` routes for consistent architecture.
+
+## Local Setup for Development
+
+### First Time Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd human-context-protocol/src
+   ```
+
+2. **Create environment configuration**
+   ```bash
+   cp .env.example .env
+   ```
+
+3. **Edit `.env` with your credentials**
+   ```bash
+   # Required: Set your authentication credentials
+   AUTH_USERNAME=admin
+   AUTH_PASSWORD=your-secure-password
+
+   # Optional: Add GitHub token for GitHub integration
+   GITHUB_TOKEN=your-github-token
+   ```
+
+4. **Start all services**
+   ```bash
+   docker compose up --build
+   ```
+
+5. **Test your setup**
+   ```bash
+   # Replace with your actual password from .env
+   curl -u admin:your-secure-password http://localhost:3000/api/users
+   ```
+
+### Environment Variables
+
+| Variable | Required | Description | Default |
+|----------|----------|-------------|---------|
+| `AUTH_USERNAME` | Yes | Username for API authentication | `admin` |
+| `AUTH_PASSWORD` | Yes | Password for API authentication | `your-secure-password-here` |
+| `GITHUB_TOKEN` | No | GitHub personal access token | (empty) |
+
+### Security Notes
+
+- ✅ **`.env` is git-ignored** - your secrets stay local
+- ✅ **Each developer uses their own credentials**
+- ✅ **No secrets in committed code**
+- ⚠️  **Choose a strong password** for production use
+
+### Sharing with Team
+
+1. **Share the repository** (without your `.env` file)
+2. **Team members copy** `.env.example` to `.env`
+3. **Each person sets** their own `AUTH_PASSWORD`
+4. **Everyone can run** `docker compose up` with their credentials
 
 ### Local Development (Alternative)
 
@@ -99,11 +158,64 @@ Changes you make to code on your host are picked up immediately in this local (n
 - **Health check**: `/health` for service monitoring
 - **Claude setup**: Use `claude-desktop-config-example.json` configuration
 
+## Authentication
+
+For cloud deployment protection, all API endpoints (except health checks and docs) require **Basic Authentication**.
+
+### Default Credentials
+
+- **Username**: `admin`
+- **Password**: `password123`
+
+### Usage Examples
+
+**Authenticated API call:**
+```bash
+curl -u admin:password123 http://localhost:3000/api/users
+```
+
+**Without authentication (fails):**
+```bash
+curl http://localhost:3000/api/users
+# Returns: {"error":"Authentication required","message":"Please provide Basic Auth credentials (username:password)"}
+```
+
+**Public endpoints (no auth required):**
+```bash
+curl http://localhost:3000/health          # Gateway health
+curl http://localhost:3000/api/docs        # API documentation
+curl http://localhost:3004/health          # Auth service health
+```
+
+### Customizing Credentials
+
+**For Docker Compose:**
+```bash
+# Set custom credentials via environment variables
+AUTH_USERNAME=your-username AUTH_PASSWORD=your-secure-password docker compose up
+```
+
+**For production deployment:**
+```bash
+# Set environment variables
+export AUTH_USERNAME=your-secure-username
+export AUTH_PASSWORD=your-very-secure-password
+```
+
+### Future Extensions
+
+The auth service is designed for easy extension:
+- **JWT Tokens**: Replace Basic Auth with signed JWTs
+- **User Database**: Add user registration and management
+- **OAuth Integration**: Add Google, GitHub, etc. authentication
+- **Role-based Access**: Add roles and permissions
+- **Multi-tenant**: Add organization/tenant support
+
 ### API Examples
 
 Create a preference:
 ```bash
-curl -X POST http://localhost:3000/api/preferences \
+curl -u admin:password123 -X POST http://localhost:3000/api/preferences \
   -H "Content-Type: application/json" \
   -d '{
     "userId": "user123",
@@ -115,25 +227,25 @@ curl -X POST http://localhost:3000/api/preferences \
 
 Get user preferences:
 ```bash
-curl http://localhost:3000/api/preferences/user/user123
+curl -u admin:password123 http://localhost:3000/api/preferences/user/user123
 ```
 
 **GitHub Import Service Examples (via Gateway):**
 
 Test the service:
 ```bash
-curl http://localhost:3000/api/github/health
-curl http://localhost:3000/api/github/test
+curl -u admin:password123 http://localhost:3000/api/github/health
+curl -u admin:password123 http://localhost:3000/api/github/test
 ```
 
 Get a public repository:
 ```bash
-curl "http://localhost:3000/api/github/repo/octocat/Hello-World"
+curl -u admin:password123 "http://localhost:3000/api/github/repo/octocat/Hello-World"
 ```
 
 Get a user's repositories:
 ```bash
-curl "http://localhost:3000/api/github/user/octocat/repos"
+curl -u admin:password123 "http://localhost:3000/api/github/user/octocat/repos"
 ```
 
 ### Location Management
@@ -142,12 +254,12 @@ The system includes comprehensive location management for context-aware features
 
 **Get all locations for a user:**
 ```bash
-curl "http://localhost:3000/api/locations?userId=507f1f77bcf86cd799439011"
+curl -u admin:password123 "http://localhost:3000/api/locations?userId=507f1f77bcf86cd799439011"
 ```
 
 **Create a system location (home):**
 ```bash
-curl -X POST "http://localhost:3000/api/locations/system?userId=507f1f77bcf86cd799439011" \
+curl -u admin:password123 -X POST "http://localhost:3000/api/locations/system?userId=507f1f77bcf86cd799439011" \
   -H "Content-Type: application/json" \
   -d '{
     "locationType": "home",
@@ -162,7 +274,7 @@ curl -X POST "http://localhost:3000/api/locations/system?userId=507f1f77bcf86cd7
 
 **Create a custom location:**
 ```bash
-curl -X POST "http://localhost:3000/api/locations/custom?userId=507f1f77bcf86cd799439011" \
+curl -u admin:password123 -X POST "http://localhost:3000/api/locations/custom?userId=507f1f77bcf86cd799439011" \
   -H "Content-Type: application/json" \
   -d '{
     "locationName": "moms_house",
@@ -179,12 +291,12 @@ curl -X POST "http://localhost:3000/api/locations/custom?userId=507f1f77bcf86cd7
 
 **Get available system location types:**
 ```bash
-curl "http://localhost:3000/api/locations/available-system?userId=507f1f77bcf86cd799439011"
+curl -u admin:password123 "http://localhost:3000/api/locations/available-system?userId=507f1f77bcf86cd799439011"
 ```
 
 **Update a location (when you move):**
 ```bash
-curl -X PUT "http://localhost:3000/api/locations/home?userId=507f1f77bcf86cd799439011" \
+curl -u admin:password123 -X PUT "http://localhost:3000/api/locations/home?userId=507f1f77bcf86cd799439011" \
   -H "Content-Type: application/json" \
   -d '{
     "address": "789 New Street, Different City, ST 98765",
@@ -225,7 +337,7 @@ The food preference system enables users to:
 
 **Set default food preferences (global):**
 ```bash
-curl -X PUT "http://localhost:3000/api/locations/food-preferences/default?userId=507f1f77bcf86cd799439011" \
+curl -u admin:password123 -X PUT "http://localhost:3000/api/locations/food-preferences/default?userId=507f1f77bcf86cd799439011" \
   -H "Content-Type: application/json" \
   -d '{
     "preferences": [
@@ -238,7 +350,7 @@ curl -X PUT "http://localhost:3000/api/locations/food-preferences/default?userId
 
 **Override preferences for work location:**
 ```bash
-curl -X PUT "http://localhost:3000/api/locations/work/food-preferences?userId=507f1f77bcf86cd799439011" \
+curl -u admin:password123 -X PUT "http://localhost:3000/api/locations/work/food-preferences?userId=507f1f77bcf86cd799439011" \
   -H "Content-Type: application/json" \
   -d '{
     "preferences": [
@@ -250,12 +362,12 @@ curl -X PUT "http://localhost:3000/api/locations/work/food-preferences?userId=50
 
 **Get effective preferences at work (merges defaults + work overrides):**
 ```bash
-curl "http://localhost:3000/api/locations/food-preferences/effective?userId=507f1f77bcf86cd799439011&locationKey=work"
+curl -u admin:password123 "http://localhost:3000/api/locations/food-preferences/effective?userId=507f1f77bcf86cd799439011&locationKey=work"
 ```
 
 **Update a single preference:**
 ```bash
-curl -X PATCH "http://localhost:3000/api/locations/food-preferences/default?userId=507f1f77bcf86cd799439011" \
+curl -u admin:password123 -X PATCH "http://localhost:3000/api/locations/food-preferences/default?userId=507f1f77bcf86cd799439011" \
   -H "Content-Type: application/json" \
   -d '{
     "category": "pizza",
@@ -265,7 +377,7 @@ curl -X PATCH "http://localhost:3000/api/locations/food-preferences/default?user
 
 **Get default preferences:**
 ```bash
-curl "http://localhost:3000/api/locations/food-preferences/default?userId=507f1f77bcf86cd799439011"
+curl -u admin:password123 "http://localhost:3000/api/locations/food-preferences/default?userId=507f1f77bcf86cd799439011"
 ```
 
 ### MCP Tools for Claude
@@ -635,11 +747,29 @@ Current port assignments:
 
 #### Important Notes
 - All services except MCP service should only be accessible via the gateway
+- **Authentication**: New services are automatically protected by Gateway auth (no additional setup needed)
+- **Swagger Integration**: Add `@ApiBasicAuth('basic-auth')` decorator to controllers for proper API docs
 - Follow existing code patterns and conventions in other services
 - Use the shared package for common utilities and types
 - Update Swagger documentation for any new API endpoints
 - Ensure proper error handling and logging
 - Add health check endpoints for monitoring
+
+#### Authentication Integration
+New services automatically inherit authentication protection through the Gateway:
+
+1. **No Auth Code Needed**: Services behind the Gateway don't need to implement auth
+2. **Swagger Documentation**: Add auth decorators to controllers:
+   ```typescript
+   @ApiTags('my-service')
+   @ApiBasicAuth('basic-auth')  // Add this line
+   @Controller('api/my-service')
+   export class MyServiceController { }
+   ```
+3. **Testing**: Use auth in API calls:
+   ```bash
+   curl -u admin:password123 http://localhost:3000/api/my-service/endpoint
+   ```
 
 ## Live Reload Options
 

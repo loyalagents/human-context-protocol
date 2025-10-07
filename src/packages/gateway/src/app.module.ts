@@ -6,6 +6,7 @@ import { PreferenceModule } from './modules/preference/preference.module';
 import { LocationModule } from './modules/location/location.module';
 import { GitHubModule } from './modules/github/github.module';
 import { UserModule } from './modules/user/user.module';
+import { AuthModule } from './modules/auth/auth.module';
 import configuration from './config/configuration';
 
 @Module({
@@ -18,6 +19,7 @@ import configuration from './config/configuration';
       ttl: 60000, // 1 minute
       limit: 100, // 100 requests per minute
     }]),
+    AuthModule,
     HealthModule,
     PreferenceModule,
     LocationModule,

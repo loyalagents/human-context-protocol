@@ -10,7 +10,7 @@ import {
   Query,
   UseGuards
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiQuery, ApiResponse as SwaggerApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam, ApiQuery, ApiResponse as SwaggerApiResponse, ApiBasicAuth } from '@nestjs/swagger';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { Observable } from 'rxjs';
 import {
@@ -27,6 +27,7 @@ import {
 import { LocationService } from './location.service';
 
 @ApiTags('locations')
+@ApiBasicAuth('basic-auth')
 @Controller('api/locations')
 @UseGuards(ThrottlerGuard)
 export class LocationController {

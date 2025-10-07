@@ -14,6 +14,8 @@ export class GatewayClientService {
 
   constructor() {
     const gatewayUrl = process.env.GATEWAY_URL || 'http://localhost:3000';
+    const authUsername = process.env.AUTH_USERNAME || 'admin';
+    const authPassword = process.env.AUTH_PASSWORD || 'password123';
 
     this.client = axios.create({
       baseURL: gatewayUrl,
@@ -21,6 +23,10 @@ export class GatewayClientService {
       headers: {
         'Content-Type': 'application/json',
       },
+      auth: {
+        username: authUsername,
+        password: authPassword
+      }
     });
 
     // Add response interceptor for error handling

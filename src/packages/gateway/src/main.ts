@@ -29,6 +29,15 @@ async function bootstrap() {
     .addTag('users', 'User account management operations')
     .addTag('preferences', 'User preference management operations')
     .addTag('github', 'GitHub repository and user data operations')
+    .addBasicAuth(
+      {
+        type: 'http',
+        scheme: 'basic',
+        name: 'Basic Authentication',
+        description: 'Enter your username and password (default: admin/password123)'
+      },
+      'basic-auth'
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

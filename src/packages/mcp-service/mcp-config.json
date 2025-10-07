@@ -33,7 +33,9 @@
     "command": "npm",
     "args": ["run", "start", "--workspace=@personal-context-router/mcp-service"],
     "env": {
-      "GATEWAY_URL": "http://localhost:3000"
+      "GATEWAY_URL": "http://localhost:3000",
+      "AUTH_USERNAME": "admin",
+      "AUTH_PASSWORD": "your-password-from-env-file"
     }
   }
 }

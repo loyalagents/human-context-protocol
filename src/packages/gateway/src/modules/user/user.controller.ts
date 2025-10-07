@@ -9,7 +9,7 @@ import {
   Query,
   UseGuards
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam, ApiBasicAuth } from '@nestjs/swagger';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { Observable } from 'rxjs';
 import {
@@ -25,6 +25,7 @@ import {
 import { UserService } from './user.service';
 
 @ApiTags('users')
+@ApiBasicAuth('basic-auth')
 @Controller('api/users')
 @UseGuards(ThrottlerGuard)
 export class UserController {

@@ -9,7 +9,7 @@ import {
   Query,
   UseGuards
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam, ApiBasicAuth } from '@nestjs/swagger';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { Observable } from 'rxjs';
 import { 
@@ -24,6 +24,7 @@ import {
 import { PreferenceService } from './preference.service';
 
 @ApiTags('preferences')
+@ApiBasicAuth('basic-auth')
 @Controller('api/preferences')
 @UseGuards(ThrottlerGuard)
 export class PreferenceController {

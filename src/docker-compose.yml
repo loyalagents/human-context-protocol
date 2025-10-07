@@ -68,10 +68,28 @@ services:
       - USER_SERVICE_PORT=3016
       - GITHUB_SERVICE_HOST=github-import-service
       - GITHUB_SERVICE_PORT=3004
+      - AUTH_SERVICE_URL=http://auth-service:3004
     depends_on:
       - preference-service
       - user-service
       - github-import-service
+      - auth-service
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: packages/auth-service/Dockerfile
+    container_name: auth-service
+    restart: unless-stopped
+    ports:
+      - "3004:3004"
+    # Run auth service (production mode; no live reload)
+    command: npm start --workspace=@personal-context-router/auth-service
+    environment:
+      - PORT=3004
+      - NODE_ENV=development
+      - AUTH_USERNAME=${AUTH_USERNAME:-admin}
+      - AUTH_PASSWORD=${AUTH_PASSWORD:-password123}
 
   mcp-service:
     build:
@@ -87,6 +105,8 @@ services:
       - PORT=3003
       - NODE_ENV=development
       - GATEWAY_URL=http://gateway:3000
+      - AUTH_USERNAME=${AUTH_USERNAME:-admin}
+      - AUTH_PASSWORD=${AUTH_PASSWORD:-password123}
     depends_on:
       - gateway
 

@@ -1,9 +1,10 @@
 import { Controller, Get, Param } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam, ApiResponse, ApiBasicAuth } from '@nestjs/swagger';
 import { Observable } from 'rxjs';
 import { GitHubService } from './github.service';
 
 @ApiTags('github')
+@ApiBasicAuth('basic-auth')
 @Controller('api/github')
 export class GitHubController {
   constructor(private readonly githubService: GitHubService) {}
