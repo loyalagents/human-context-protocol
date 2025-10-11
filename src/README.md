@@ -46,11 +46,10 @@ Note: in this default configuration, containers run compiled code (no live reloa
 
 **Services will be available at:**
 - Gateway: http://localhost:3000 (entry point for all API calls)
-- Preference Service: http://localhost:3001 (direct access for development)
 - MCP Service: http://localhost:3003/mcp (HTTP bridge for Claude integration)
 - MongoDB: localhost:27017
 
-**Note**: GitHub Import Service is only accessible via the Gateway at `/api/github/*` routes for consistent architecture.
+**Note**: All other services (Preference, User, Auth, GitHub Import) are internal-only and accessible via the Gateway for security and architectural consistency.
 
 ## Local Setup for Development
 
@@ -161,29 +160,16 @@ Changes you make to code on your host are picked up immediately in this local (n
 **Gateway Service**: `http://localhost:3000` (Main API Entry Point)
 - Health check: `GET /health`
 - Swagger docs: `GET /api/docs`
-- API routes: `GET /api/preferences/*` (communicates with preference microservice via TCP)
-- Location API routes: `GET /api/locations/*` (proxies to Preference Service HTTP API)
-- GitHub API routes: `GET /api/github/*` (proxies to GitHub Import Service via HTTP)
+- User API routes: `GET /api/users/*` (proxies to User Service)
+- Preference API routes: `GET /api/preferences/*` (proxies to Preference Service)
+- Location API routes: `GET /api/locations/*` (proxies to Preference Service)
+- GitHub API routes: `GET /api/github/*` (proxies to GitHub Import Service)
 
-**Preference Service**: `http://localhost:3001`  
-- Health check: `GET /health`
-- Swagger docs: `GET /api/docs`
-- HTTP API + TCP microservice (port 3002 for inter-service communication)
-- Create preference: `POST /preferences`
-- Get user preferences: `GET /preferences/user/:userId`
-- Get specific preference: `GET /preferences/user/:userId/:key`
-- Update preference: `PUT /preferences/user/:userId/:key`
-- Delete preference: `DELETE /preferences/user/:userId/:key`
-
-**GitHub Import Service**: Internal service (no direct access)
-- **Access via Gateway**: All GitHub endpoints available at `/api/github/*` routes
-- Health check via Gateway: `GET /api/github/health`
-- Service status via Gateway: `GET /api/github/test`
-- Get repository via Gateway: `GET /api/github/repo/:owner/:repo`
-- Get user repositories via Gateway: `GET /api/github/user/:username/repos`
-- GitHub API integration using Octokit
-- Environment variable: `GITHUB_TOKEN` (optional for public repos)
-- **Note**: Service runs internally - all access must go through Gateway
+**Internal Services** (accessible only via Gateway):
+- **Preference Service**: HTTP API + TCP microservice for preference and location management
+- **User Service**: HTTP API + TCP microservice for user account management
+- **Auth Service**: Authentication validation service
+- **GitHub Import Service**: GitHub API integration using Octokit (requires `GITHUB_TOKEN` env var)
 
 **MCP Service**: `http://localhost:3003/mcp` (HTTP bridge)
 - Model Context Protocol server for Claude integration via HTTP bridge
