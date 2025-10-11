@@ -45,11 +45,13 @@ That's it! This will:
 Note: in this default configuration, containers run compiled code (no live reload). See "Live Reload Options" below if you want auto-rebuild on file changes.
 
 **Services will be available at:**
-- Gateway: http://localhost:3000 (entry point for all API calls)
-- MCP Service: http://localhost:3003/mcp (HTTP bridge for Claude integration)
-- MongoDB: localhost:27017
+- **Traefik Proxy**: https://localhost (HTTPS with SSL termination)
+- **Gateway**: https://localhost/api/* (all API calls via Traefik)
+- **MCP Service**: https://localhost/mcp (Claude integration via Traefik)
+- **Swagger Docs**: https://localhost/api/docs (API documentation)
+- **MongoDB**: localhost:27017 (database, not exposed externally)
 
-**Note**: All other services (Preference, User, Auth, GitHub Import) are internal-only and accessible via the Gateway for security and architectural consistency.
+**Note**: All services are routed through Traefik reverse proxy with HTTPS. Direct service access is disabled for security. For cloud deployment, update `DOMAIN` and `LETSENCRYPT_EMAIL` environment variables.
 
 ## Local Setup for Development
 
@@ -129,8 +131,9 @@ To use the MCP tools with Claude Desktop:
          "command": "npx",
          "args": [
            "-y", "mcp-remote@0.1.18",
-           "http://localhost:3003/mcp",
-           "--mode", "duplex", "--allow-http",
+           "https://localhost/mcp",
+           "--mode", "duplex",
+           "--allow-http",
            "--header", "Authorization:Basic <your-base64-result>"
          ]
        }
@@ -143,6 +146,36 @@ To use the MCP tools with Claude Desktop:
 5. **Test**: Ask Claude "Show me my users" or "Get my preferences"
 
 **Note**: The MCP service automatically forwards authentication headers to the Gateway, so all tools work seamlessly once Claude Desktop is configured with the correct credentials.
+
+### Cloud Deployment Setup
+
+For cloud deployment (GCP, AWS, etc.), update these environment variables:
+
+```bash
+# In your .env file
+DOMAIN=your-domain.com              # e.g., demo.hcp.loyalagents.org
+LETSENCRYPT_EMAIL=your@email.com    # For SSL certificate generation
+AUTH_USERNAME=your-username
+AUTH_PASSWORD=your-secure-password
+```
+
+Then update Claude Desktop to use your domain:
+```json
+{
+  "mcpServers": {
+    "personal-context-router": {
+      "command": "npx",
+      "args": [
+        "-y", "mcp-remote@0.1.18",
+        "https://your-domain.com/mcp",
+        "--mode", "duplex",
+        "--allow-http",
+        "--header", "Authorization:Basic <your-base64-result>"
+      ]
+    }
+  }
+}
+```
 
 ### Local Development (Alternative)
 

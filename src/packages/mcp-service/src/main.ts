@@ -31,14 +31,19 @@ class MCPHttpServer {
   }
 
   private setupRoutes() {
+    // TODO: Re-enable health endpoint with proper routing
+    // Currently commented out to simplify Traefik routing for demo.
+    // The /health endpoint conflicts with /mcp prefix handling.
+    // Future: Either use MCP gateway or fix Traefik path rewriting.
+
     // Health check endpoint
-    this.app.get('/health', (_req, res) => {
-      res.json({
-        status: 'healthy',
-        service: 'mcp-service',
-        timestamp: new Date().toISOString()
-      });
-    });
+    // this.app.get('/health', (_req, res) => {
+    //   res.json({
+    //     status: 'healthy',
+    //     service: 'mcp-service',
+    //     timestamp: new Date().toISOString()
+    //   });
+    // });
 
     // MCP over HTTP endpoint - handles JSON-RPC requests
     this.app.post('/mcp', async (req, res) => {
@@ -219,7 +224,7 @@ class MCPHttpServer {
     this.app.listen(this.port, () => {
       console.log(`🚀 MCP HTTP Server started on port ${this.port}`);
       console.log(`📡 MCP endpoint available at http://localhost:${this.port}/mcp`);
-      console.log(`🏥 Health check available at http://localhost:${this.port}/health`);
+      console.log(`⚠️  Health check temporarily disabled for demo`);
     });
   }
 }

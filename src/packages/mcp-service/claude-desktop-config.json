@@ -5,10 +5,10 @@
       "args": [
         "-y",
         "mcp-remote@0.1.18",
-        "http://localhost:3003/mcp",
+        "https://localhost/mcp",
         "--mode", "duplex",
         "--allow-http",
-        "--header", "Authorization:Basic YWRtaW46eW91ci1wYXNzd29yZC1oZXJl"
+        "--header", "Authorization:Basic bG95YWwtYmlyZHM6YzAwbC1jQHRz"
       ]
     }
   }

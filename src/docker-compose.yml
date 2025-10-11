@@ -1,10 +1,42 @@
 services:
+  # === PUBLIC INGRESS (HTTPS) ===
+  traefik:
+    image: traefik:v2.10
+    # Watch docker labels, don't expose services unless labeled
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      # HTTP / HTTPS entrypoints
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      # Automatic HTTPS via Let's Encrypt (HTTP-01)
+      - --certificatesresolvers.le.acme.email=${LETSENCRYPT_EMAIL}
+      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.le.acme.httpchallenge=true
+      - --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
+    ports:
+      - "80:80"    # only Traefik publishes host ports
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./letsencrypt:/letsencrypt
+    restart: unless-stopped
+    labels:
+      # Redirect all plain HTTP to HTTPS
+      - traefik.enable=true
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+      - traefik.http.routers.http-catchall.rule=HostRegexp(`{host:.+}`)
+      - traefik.http.routers.http-catchall.entrypoints=web
+      - traefik.http.routers.http-catchall.middlewares=redirect-to-https
+
+  # === INTERNAL SERVICES (no public ports) ===
   mongodb:
     image: mongo:7
     container_name: mongodb
     restart: unless-stopped
-    ports:
-      - "27017:27017"
+    # Do NOT publish Mongo publicly. If you need local access, use an SSH tunnel or bind 127.0.0.1:27017:27017.
+    # ports:
+    #   - "27017:27017"
     volumes:
       - mongodb_data:/data/db
     environment:
@@ -16,8 +48,10 @@ services:
       dockerfile: packages/preference-service/Dockerfile
     container_name: preference-service
     restart: unless-stopped
-    # No external port exposure - only accessible via gateway
-    # Run compiled code (production mode; no live reload)
+    # Internal only; gateway calls http://preference-service:3001
+    expose:
+      - "3001"
+      - "3002"
     command: npm run start:prod --workspace=@personal-context-router/preference-service
     environment:
       - PORT=3001
@@ -33,8 +67,10 @@ services:
       dockerfile: packages/user-service/Dockerfile
     container_name: user-service
     restart: unless-stopped
-    # No external port exposure - only accessible via gateway
-    # Run compiled code (production mode; no live reload)
+    # Internal only; gateway calls http://user-service:3015 (or 3016 for microservice)
+    expose:
+      - "3015"
+      - "3016"
     command: npm run start:prod --workspace=@personal-context-router/user-service
     environment:
       - PORT=3015
@@ -44,15 +80,16 @@ services:
     depends_on:
       - mongodb
 
+  # === PUBLIC VIA TRAEFIK: GATEWAY (root host) ===
   gateway:
     build:
       context: .
       dockerfile: packages/gateway/Dockerfile
     container_name: gateway
     restart: unless-stopped
-    ports:
-      - "3000:3000"
-    # Run compiled code (production mode; no live reload)
+    # Don't publish to host; Traefik will route TLS traffic to container:3000
+    expose:
+      - "3000"
     command: npm run start:prod --workspace=@personal-context-router/gateway
     environment:
       - PORT=3000
@@ -70,6 +107,14 @@ services:
       - user-service
       - github-import-service
       - auth-service
+    labels:
+      - traefik.enable=true
+      # Serve the gateway on https://demo.hcp.loyalagents.org/
+      - traefik.http.routers.gateway.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.gateway.entrypoints=websecure
+      - traefik.http.routers.gateway.tls.certresolver=le
+      - traefik.http.routers.gateway.priority=50
+      - traefik.http.services.gateway.loadbalancer.server.port=3000
 
   auth-service:
     build:
@@ -77,8 +122,8 @@ services:
       dockerfile: packages/auth-service/Dockerfile
     container_name: auth-service
     restart: unless-stopped
-    # No external port exposure - only accessible via gateway
-    # Run auth service (production mode; no live reload)
+    expose:
+      - "3004"
     command: npm start --workspace=@personal-context-router/auth-service
     environment:
       - PORT=3004
@@ -86,15 +131,16 @@ services:
       - AUTH_USERNAME=${AUTH_USERNAME:-admin}
       - AUTH_PASSWORD=${AUTH_PASSWORD:-password123}
 
+  # === PUBLIC VIA TRAEFIK: MCP (path /mcp) ===
   mcp-service:
     build:
       context: .
       dockerfile: packages/mcp-service/Dockerfile
     container_name: mcp-service
     restart: unless-stopped
-    ports:
-      - "3003:3003"
-    # Run HTTP MCP server (production mode; no live reload)
+    # Keep internal; Traefik will publish it at /mcp
+    expose:
+      - "3003"
     command: npm run start --workspace=@personal-context-router/mcp-service
     environment:
       - PORT=3003
@@ -102,6 +148,14 @@ services:
       - GATEWAY_URL=http://gateway:3000
     depends_on:
       - gateway
+    labels:
+      - traefik.enable=true
+      # Simple MCP routing - health endpoint temporarily disabled for demo
+      - traefik.http.routers.mcp.rule=Host(`${DOMAIN}`) && PathPrefix(`/mcp`)
+      - traefik.http.routers.mcp.entrypoints=websecure
+      - traefik.http.routers.mcp.tls.certresolver=le
+      - traefik.http.routers.mcp.priority=100
+      - traefik.http.services.mcp.loadbalancer.server.port=3003
 
   github-import-service:
     build:
@@ -109,8 +163,7 @@ services:
       dockerfile: packages/github-import-service/Dockerfile
     container_name: github-import-service
     restart: unless-stopped
-    # No external port exposure - only accessible via gateway
-    # Run compiled code (production mode; no live reload)
+    # Internal only
     command: npm run start:prod --workspace=@personal-context-router/github-import-service
     environment:
       - PORT=3004

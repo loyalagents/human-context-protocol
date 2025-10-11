@@ -59,6 +59,10 @@ Authentication is handled at the **HTTP client level** using `mcp-remote`:
 
 **Note**: Authentication is configured in Claude Desktop, not in the MCP service code.
 
+## Known Limitations
+
+⚠️ **Health Endpoint**: The `/health` endpoint is temporarily disabled to simplify Traefik routing for demo purposes. This doesn't affect Claude Desktop functionality, which only uses the JSON-RPC endpoint.
+
 ## Claude Desktop Setup
 
 ### 1. Update Claude Desktop Configuration
