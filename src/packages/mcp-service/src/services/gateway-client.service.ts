@@ -12,21 +12,21 @@ import {
 export class GatewayClientService {
   private client: AxiosInstance;
 
-  constructor() {
+  constructor(authHeader?: string) {
     const gatewayUrl = process.env.GATEWAY_URL || 'http://localhost:3000';
-    const authUsername = process.env.AUTH_USERNAME || 'admin';
-    const authPassword = process.env.AUTH_PASSWORD || 'password123';
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+    }
 
     this.client = axios.create({
       baseURL: gatewayUrl,
       timeout: 10000,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      auth: {
-        username: authUsername,
-        password: authPassword
-      }
+      headers,
     });
 
     // Add response interceptor for error handling

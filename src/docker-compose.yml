@@ -105,8 +105,6 @@ services:
       - PORT=3003
       - NODE_ENV=development
       - GATEWAY_URL=http://gateway:3000
-      - AUTH_USERNAME=${AUTH_USERNAME:-admin}
-      - AUTH_PASSWORD=${AUTH_PASSWORD:-password123}
     depends_on:
       - gateway
 

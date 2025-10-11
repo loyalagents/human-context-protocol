@@ -43,37 +43,53 @@ Model Context Protocol server exposing comprehensive user context tools to Claud
 
 ## Authentication
 
-The MCP service automatically handles authentication when communicating with the Gateway:
-- **Credentials**: Uses `admin:password123` (configurable via environment variables)
-- **Gateway Integration**: All tool operations are authenticated transparently
-- **Claude Setup**: No authentication required for Claude → MCP service communication
-- **Error Handling**: Authentication failures are propagated to Claude as tool errors
+Authentication is handled at the **HTTP client level** using `mcp-remote`:
+- **HTTP Remote**: Uses `mcp-remote` package to connect to MCP service over HTTP
+- **Client Authentication**: Claude Desktop passes Basic Auth header to MCP service
+- **Header Forwarding**: MCP service extracts and forwards auth header to Gateway API calls
+- **Gateway Integration**: Gateway validates credentials and authorizes all API operations
+- **Transparent**: All tool operations work seamlessly with authentication
 
-**Note**: Claude users don't need to provide credentials directly - the MCP service handles gateway authentication internally.
+**Technical Flow**:
+1. Claude Desktop sends `Authorization: Basic <token>` header with each MCP request
+2. MCP service extracts the header from `req.headers.authorization`
+3. Creates authenticated `GatewayClientService` instance with the header
+4. All API calls to Gateway include the forwarded authentication
+5. Gateway validates credentials and processes the request
+
+**Note**: Authentication is configured in Claude Desktop, not in the MCP service code.
 
 ## Claude Desktop Setup
 
-### 1. Update MCP Configuration
-Copy `mcp-config.json` to your Claude Desktop configuration and update the credentials:
+### 1. Update Claude Desktop Configuration
+Copy `claude-desktop-config.json` to your Claude Desktop settings:
 
 ```json
 {
-  "name": "personal-context-router",
-  "connection": {
-    "type": "stdio",
-    "command": "npm",
-    "args": ["run", "start", "--workspace=@personal-context-router/mcp-service"],
-    "env": {
-      "GATEWAY_URL": "http://localhost:3000",
-      "AUTH_USERNAME": "admin",
-      "AUTH_PASSWORD": "your-actual-password"
+  "mcpServers": {
+    "personal-context-router": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote@0.1.18",
+        "http://localhost:3003/mcp",
+        "--mode", "duplex",
+        "--allow-http",
+        "--header", "Authorization:Basic YWRtaW46eW91ci1wYXNzd29yZC1oZXJl"
+      ]
     }
   }
 }
 ```
 
-### 2. Set Your Credentials
-Replace `your-actual-password` with the same `AUTH_PASSWORD` from your `.env` file.
+### 2. Generate Your Auth Header
+Create your Base64 encoded credentials:
+```bash
+# Replace with your actual password from .env
+echo -n "admin:your-actual-password" | base64
+```
+
+Then replace `YWRtaW46eW91ci1wYXNzd29yZC1oZXJl` with your generated value.
 
 ### 3. Restart Claude Desktop
 After updating the configuration, restart Claude Desktop to pick up the new settings.

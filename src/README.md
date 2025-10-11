@@ -110,6 +110,41 @@ Note: in this default configuration, containers run compiled code (no live reloa
 3. **Each person sets** their own `AUTH_PASSWORD`
 4. **Everyone can run** `docker compose up` with their credentials
 
+### Claude Desktop Setup
+
+To use the MCP tools with Claude Desktop:
+
+1. **Start services**: `docker compose up -d`
+
+2. **Generate auth header**:
+   ```bash
+   # Replace with your password from .env
+   echo -n "your-username:your-password" | base64
+   ```
+
+3. **Update Claude Desktop config** with the result:
+   ```json
+   {
+     "mcpServers": {
+       "personal-context-router": {
+         "command": "npx",
+         "args": [
+           "-y", "mcp-remote@0.1.18",
+           "http://localhost:3003/mcp",
+           "--mode", "duplex", "--allow-http",
+           "--header", "Authorization:Basic <your-base64-result>"
+         ]
+       }
+     }
+   }
+   ```
+
+4. **Restart Claude Desktop** to load the configuration
+
+5. **Test**: Ask Claude "Show me my users" or "Get my preferences"
+
+**Note**: The MCP service automatically forwards authentication headers to the Gateway, so all tools work seamlessly once Claude Desktop is configured with the correct credentials.
+
 ### Local Development (Alternative)
 
 If you prefer to run without Docker:

@@ -15,22 +15,11 @@ dotenv.config();
 
 class MCPHttpServer {
   private app: express.Application;
-  private gatewayClient: GatewayClientService;
-  private preferenceTools: PreferenceTools;
-  private githubTools: GitHubTools;
-  private userTools: UserTools;
-  private locationTools: LocationTools;
   private port: number;
 
   constructor() {
     this.app = express();
     this.port = parseInt(process.env.PORT || '3003');
-
-    this.gatewayClient = new GatewayClientService();
-    this.preferenceTools = new PreferenceTools(this.gatewayClient);
-    this.githubTools = new GitHubTools(this.gatewayClient);
-    this.userTools = new UserTools(this.gatewayClient);
-    this.locationTools = new LocationTools(this.gatewayClient);
 
     this.setupMiddleware();
     this.setupRoutes();
@@ -57,6 +46,9 @@ class MCPHttpServer {
         const jsonRpcRequest = req.body;
         console.log('📥 Received MCP request:', JSON.stringify(jsonRpcRequest, null, 2));
 
+        // Extract authentication header
+        const authHeader = req.headers.authorization;
+
         // Validate JSON-RPC request
         const isNotification = jsonRpcRequest.method?.startsWith('notifications/');
         if (!jsonRpcRequest.jsonrpc || !jsonRpcRequest.method || (!isNotification && jsonRpcRequest.id === undefined)) {
@@ -71,6 +63,13 @@ class MCPHttpServer {
           });
         }
 
+        // Create authenticated gateway client and tools for this request
+        const gatewayClient = new GatewayClientService(authHeader);
+        const preferenceTools = new PreferenceTools(gatewayClient);
+        const githubTools = new GitHubTools(gatewayClient);
+        const userTools = new UserTools(gatewayClient);
+        const locationTools = new LocationTools(gatewayClient);
+
         let response;
 
         switch (jsonRpcRequest.method) {
@@ -80,10 +79,10 @@ class MCPHttpServer {
               id: jsonRpcRequest.id,
               result: {
                 tools: [
-                  ...this.preferenceTools.getTools(),
-                  ...this.githubTools.getTools(),
-                  ...this.userTools.getTools(),
-                  ...this.locationTools.getTools()
+                  ...preferenceTools.getTools(),
+                  ...githubTools.getTools(),
+                  ...userTools.getTools(),
+                  ...locationTools.getTools()
                 ]
               }
             };
@@ -101,14 +100,14 @@ class MCPHttpServer {
                   name.startsWith('update_location') || name.startsWith('delete_location') || name.startsWith('mark_location') ||
                   name.startsWith('get_available_system_locations') || name.startsWith('get_user_locations') ||
                   name.includes('food_preference')) {
-                result = await this.locationTools.handleTool(name, args);
+                result = await locationTools.handleTool(name, args);
               } else if (name.startsWith('get_github_') || name.startsWith('get_user_repos')) {
-                result = await this.githubTools.handleToolCall(name, args);
+                result = await githubTools.handleToolCall(name, args);
               } else if (name.startsWith('create_user') || name.startsWith('get_user') || name.startsWith('update_user') ||
                          name.startsWith('deactivate_user') || name.startsWith('list_users') || name.startsWith('record_user_login')) {
-                result = await this.userTools.handleToolCall(name, args);
+                result = await userTools.handleToolCall(name, args);
               } else {
-                result = await this.preferenceTools.handleToolCall(name, args);
+                result = await preferenceTools.handleToolCall(name, args);
               }
               response = {
                 jsonrpc: '2.0',
@@ -207,9 +206,10 @@ class MCPHttpServer {
   }
 
   async start() {
-    // Test gateway connection
+    // Test gateway connection (without auth for basic connectivity check)
     try {
-      await this.gatewayClient.healthCheck();
+      const testClient = new GatewayClientService();
+      await testClient.healthCheck();
       console.log('✅ Connected to Gateway successfully');
     } catch (error) {
       console.warn('⚠️  Could not connect to Gateway:', error instanceof Error ? error.message : error);
