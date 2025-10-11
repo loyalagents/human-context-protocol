@@ -20,6 +20,9 @@ packages/*/src/**/*.d.ts
 .env.local
 .env.production
 
+# Certs
+letsencrypt/
+
 # Logs
 logs
 *.log
