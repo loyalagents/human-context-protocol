@@ -1,24 +1,23 @@
 {
   "mcpServers": {
-    "_comment": "CLOUD VERSION (WORKING) - Use this for production cloud deployment",
+    "_comment": "CLOUD VERSION (WORKING) - Uses dedicated MCP subdomain for production security",
     "personal-context-router-cloud": {
       "command": "npx",
       "args": [
         "-y",
         "mcp-remote@0.1.18",
-        "https://api.hcp.loyalagents.org/mcp",
+        "https://mcp.hcp.loyalagents.org/mcp",
         "--mode", "duplex",
         "--header", "Authorization:Basic bG95YWwtYmlyZHM6YzAwbC1jQHRz"
       ]
     },
-
-    "_comment2": "LOCAL VERSION (NOT WORKING) - HTTP gets redirected to HTTPS with self-signed cert",
+    "_comment2": "LOCAL VERSION (WORKING) - Direct HTTP access bypassing Traefik SSL",
     "personal-context-router-local": {
       "command": "npx",
       "args": [
         "-y",
         "mcp-remote@0.1.18",
-        "http://localhost/mcp",
+        "http://localhost:3003/mcp",
         "--mode", "duplex",
         "--allow-http",
         "--header", "Authorization:Basic bG95YWwtYmlyZHM6YzAwbC1jQHRz"

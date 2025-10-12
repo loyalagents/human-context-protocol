@@ -13,13 +13,15 @@ This system allows Claude Desktop to:
 
 ## Architecture
 
-**6 interconnected NestJS services:**
+**7 interconnected NestJS services:**
 
-- **Gateway** (`packages/gateway`): API router with authentication, rate limiting and validation
+- **Gateway** (`packages/gateway`): Main API router with authentication, rate limiting and validation
+- **MCP Gateway** (`packages/mcp-gateway`): Dedicated gateway for MCP traffic with auth, rate limiting, and logging
 - **Auth Service** (`packages/auth-service`): Simple authentication for cloud deployment protection
 - **Preference Service** (`packages/preference-service`): MongoDB-backed preference storage (HTTP + TCP)
 - **GitHub Import Service** (`packages/github-import-service`): GitHub API integration via Octokit
 - **MCP Service** (`packages/mcp-service`): Claude integration via Model Context Protocol
+- **User Service** (`packages/user-service`): User account management and authentication
 - **Shared** (`packages/shared`): Common types, DTOs, and utilities
 
 ## Quick Start
@@ -47,11 +49,16 @@ Note: in this default configuration, containers run compiled code (no live reloa
 **Services will be available at:**
 - **Traefik Proxy**: https://localhost (HTTPS with SSL termination)
 - **Gateway**: https://localhost/api/* (all API calls via Traefik)
-- **MCP Service**: https://localhost/mcp (Claude integration via Traefik)
+- **MCP Gateway**:
+  - **Local Development**: http://localhost:3003/mcp (direct HTTP access)
+  - **Local via Traefik**: https://localhost/mcp (path-based routing)
+  - **Cloud Production**: https://mcp.hcp.loyalagents.org/mcp (dedicated subdomain)
 - **Swagger Docs**: https://localhost/api/docs (API documentation)
+
+> **Note**: MCP has dual access modes - local development uses direct HTTP port 3003 to avoid SSL certificate setup, while cloud production uses dedicated MCP subdomain routing through Traefik.
 - **MongoDB**: localhost:27017 (database, not exposed externally)
 
-**Note**: All services are routed through Traefik reverse proxy with HTTPS. Direct service access is disabled for security. For cloud deployment, update `DOMAIN` and `LETSENCRYPT_EMAIL` environment variables.
+**Note**: All services are routed through Traefik reverse proxy with HTTPS. Direct service access is disabled for security. For cloud deployment, update `API_HOST`, `MCP_HOST`, and `LETSENCRYPT_EMAIL` environment variables.
 
 ## Local Setup for Development
 
@@ -95,6 +102,10 @@ Note: in this default configuration, containers run compiled code (no live reloa
 |----------|----------|-------------|---------|
 | `AUTH_USERNAME` | Yes | Username for API authentication | `admin` |
 | `AUTH_PASSWORD` | Yes | Password for API authentication | `your-secure-password-here` |
+| `API_HOST` | No | Domain for main API traffic | `localhost` |
+| `MCP_HOST` | No | Domain for MCP traffic (cloud only) | `mcp.hcp.loyalagents.org` |
+| `ENABLE_MCP_FALLBACK` | No | Enable MCP fallback routing via API domain | `true` (dev), `false` (prod) |
+| `LETSENCRYPT_EMAIL` | Cloud | Email for Let's Encrypt SSL certificates | (required for cloud) |
 | `GITHUB_TOKEN` | No | GitHub personal access token | (empty) |
 
 ### Security Notes
@@ -103,6 +114,35 @@ Note: in this default configuration, containers run compiled code (no live reloa
 - ✅ **Each developer uses their own credentials**
 - ✅ **No secrets in committed code**
 - ⚠️  **Choose a strong password** for production use
+
+#### MCP Routing Security
+
+The `ENABLE_MCP_FALLBACK` environment variable controls whether MCP traffic can be accessed via the main API domain (`API_HOST`). This implements defense-in-depth security:
+
+**Why This Matters:**
+- **Production Security**: In production, MCP should ONLY be accessible via the dedicated MCP subdomain (`mcp.hcp.loyalagents.org`)
+- **Attack Surface Reduction**: Disabling fallback routing eliminates an additional entry point for attackers
+- **Domain Isolation**: Enforces clean separation between API traffic and MCP traffic
+- **Monitoring Clarity**: Security teams can focus monitoring on the single MCP endpoint
+
+**Configuration Guidelines:**
+
+```bash
+# Development (.env)
+ENABLE_MCP_FALLBACK=true   # Allows https://localhost/mcp for local testing
+API_HOST=localhost
+MCP_HOST=mcp.localhost     # Separated to avoid routing conflicts
+
+# Production (.env)
+ENABLE_MCP_FALLBACK=false  # Forces use of dedicated MCP subdomain only
+API_HOST=api.hcp.loyalagents.org
+MCP_HOST=mcp.hcp.loyalagents.org
+```
+
+**Security Impact:**
+- ✅ **Development**: Fallback enabled for convenience and local HTTPS testing
+- 🔒 **Production**: Fallback disabled - MCP only accessible via dedicated subdomain
+- 🛡️ **Defense**: Prevents accidental exposure of MCP via main API routes
 
 ### Sharing with Team
 
@@ -124,16 +164,35 @@ To use the MCP tools with Claude Desktop:
    ```
 
 3. **Update Claude Desktop config** with the result:
+
+   **For Local Development (recommended):**
    ```json
    {
      "mcpServers": {
-       "personal-context-router": {
+       "personal-context-router-local": {
          "command": "npx",
          "args": [
            "-y", "mcp-remote@0.1.18",
-           "https://localhost/mcp",
+           "http://localhost:3003/mcp",
            "--mode", "duplex",
            "--allow-http",
+           "--header", "Authorization:Basic <your-base64-result>"
+         ]
+       }
+     }
+   }
+   ```
+
+   **For Cloud Production:**
+   ```json
+   {
+     "mcpServers": {
+       "personal-context-router-cloud": {
+         "command": "npx",
+         "args": [
+           "-y", "mcp-remote@0.1.18",
+           "https://mcp.hcp.loyalagents.org/mcp",
+           "--mode", "duplex",
            "--header", "Authorization:Basic <your-base64-result>"
          ]
        }
@@ -153,7 +212,7 @@ For cloud deployment (GCP, AWS, etc.), update these environment variables:
 
 ```bash
 # In your .env file
-DOMAIN=your-domain.com              # e.g., demo.hcp.loyalagents.org
+API_HOST=your-domain.com             # e.g., demo.hcp.loyalagents.org
 LETSENCRYPT_EMAIL=your@email.com    # For SSL certificate generation
 AUTH_USERNAME=your-username
 AUTH_PASSWORD=your-secure-password
