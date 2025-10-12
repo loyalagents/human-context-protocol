@@ -132,13 +132,38 @@ services:
       - AUTH_PASSWORD=${AUTH_PASSWORD:-password123}
 
   # === PUBLIC VIA TRAEFIK: MCP (path /mcp) ===
+  mcp-gateway:
+    build:
+      context: .
+      dockerfile: packages/mcp-gateway/Dockerfile
+    container_name: mcp-gateway
+    restart: unless-stopped
+    # Exposed via Traefik at /mcp path
+    expose:
+      - "3005"
+    command: npm run start --workspace=@personal-context-router/mcp-gateway
+    environment:
+      - PORT=3005
+      - NODE_ENV=development
+      - MCP_SERVICE_URL=http://mcp-service:3003
+    depends_on:
+      - mcp-service
+    labels:
+      - traefik.enable=true
+      # Route /mcp traffic to mcp-gateway
+      - traefik.http.routers.mcp.rule=Host(`${DOMAIN}`) && PathPrefix(`/mcp`)
+      - traefik.http.routers.mcp.entrypoints=websecure
+      - traefik.http.routers.mcp.tls.certresolver=le
+      - traefik.http.routers.mcp.priority=100
+      - traefik.http.services.mcp.loadbalancer.server.port=3005
+
   mcp-service:
     build:
       context: .
       dockerfile: packages/mcp-service/Dockerfile
     container_name: mcp-service
     restart: unless-stopped
-    # Keep internal; Traefik will publish it at /mcp
+    # Internal only - accessed via mcp-gateway
     expose:
       - "3003"
     command: npm run start --workspace=@personal-context-router/mcp-service
@@ -148,14 +173,6 @@ services:
       - GATEWAY_URL=http://gateway:3000
     depends_on:
       - gateway
-    labels:
-      - traefik.enable=true
-      # Simple MCP routing - health endpoint temporarily disabled for demo
-      - traefik.http.routers.mcp.rule=Host(`${DOMAIN}`) && PathPrefix(`/mcp`)
-      - traefik.http.routers.mcp.entrypoints=websecure
-      - traefik.http.routers.mcp.tls.certresolver=le
-      - traefik.http.routers.mcp.priority=100
-      - traefik.http.services.mcp.loadbalancer.server.port=3003
 
   github-import-service:
     build:

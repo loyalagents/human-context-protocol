@@ -1,0 +1,28 @@
+{
+  "name": "@personal-context-router/mcp-gateway",
+  "version": "1.0.0",
+  "description": "MCP Gateway - Routes and manages MCP traffic",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "start:dev": "ts-node src/main.ts",
+    "test": "echo \"No tests yet\""
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/cors": "^2.8.17",
+    "@types/node": "^20.8.0",
+    "typescript": "^5.2.2",
+    "ts-node": "^10.9.1"
+  },
+  "keywords": ["mcp", "gateway", "routing"],
+  "author": "Personal Context Router",
+  "license": "MIT"
+}
