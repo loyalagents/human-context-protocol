@@ -123,10 +123,10 @@ Claude Desktop → https://mcp.hcp.loyalagents.org/mcp → Traefik → mcp-gatew
 ```
 
 **Cloud Configuration:**
-- **URL**: `https://mcp.hcp.loyalagents.org/mcp`
+- **URL**: `https://mcp.hcp.loyalagents.org/mcp` (uses `MCP_HOST` environment variable)
 - **Protocol**: HTTPS with Let's Encrypt certificates
-- **Access**: Through Traefik reverse proxy
-- **Purpose**: Production-grade routing with proper SSL
+- **Access**: Through Traefik reverse proxy with dedicated subdomain routing
+- **Purpose**: Production-grade routing with proper SSL and domain separation
 
 ## Why This Split?
 
@@ -193,6 +193,39 @@ docker compose up mcp-gateway
 - **Logging**: Be mindful of logging sensitive information
 - **Network**: In production, ensure mcp-service is not directly accessible
 - **SSL**: Always use HTTPS in production environments
+
+### MCP Fallback Routing Security
+
+The gateway supports conditional fallback routing controlled by the `ENABLE_MCP_FALLBACK` environment variable:
+
+**Security Model:**
+```bash
+# Development: Multiple access points for flexibility
+ENABLE_MCP_FALLBACK=true
+API_HOST=localhost
+MCP_HOST=mcp.localhost
+# ✅ https://mcp.localhost/mcp (primary MCP route)
+# ✅ https://localhost/mcp (fallback for local HTTPS testing)
+# ✅ http://localhost:3003/mcp (direct HTTP for development)
+
+# Production: Single access point for security
+ENABLE_MCP_FALLBACK=false
+API_HOST=api.hcp.loyalagents.org
+MCP_HOST=mcp.hcp.loyalagents.org
+# ✅ https://mcp.hcp.loyalagents.org/mcp (only route)
+# ❌ https://api.hcp.loyalagents.org/mcp (disabled)
+```
+
+**Why This Design:**
+- **Principle of Least Privilege**: Production only exposes necessary endpoints
+- **Attack Surface Minimization**: Fewer routes = fewer potential attack vectors
+- **Domain Separation**: Clear boundaries between API and MCP traffic
+- **Incident Response**: Single MCP endpoint simplifies security monitoring
+
+**Implementation:**
+- Traefik labels are conditionally applied based on environment variable
+- When `ENABLE_MCP_FALLBACK` is unset or false, fallback routes are not created
+- No runtime overhead - routing decisions made at container startup
 
 ## Future Enhancements
 

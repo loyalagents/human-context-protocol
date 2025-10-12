@@ -109,11 +109,11 @@ services:
       - auth-service
     labels:
       - traefik.enable=true
-      # Serve the gateway on https://demo.hcp.loyalagents.org/
-      - traefik.http.routers.gateway.rule=Host(`${DOMAIN}`)
+      # Serve the gateway API routes with specific path prefix for clear routing
+      - traefik.http.routers.gateway.rule=Host(`${API_HOST}`) && PathPrefix(`/api`)
       - traefik.http.routers.gateway.entrypoints=websecure
       - traefik.http.routers.gateway.tls.certresolver=le
-      - traefik.http.routers.gateway.priority=50
+      - traefik.http.routers.gateway.priority=60
       - traefik.http.services.gateway.loadbalancer.server.port=3000
 
   auth-service:
@@ -152,11 +152,19 @@ services:
       - mcp-service
     labels:
       - traefik.enable=true
-      # Route /mcp traffic to mcp-gateway
-      - traefik.http.routers.mcp.rule=Host(`${DOMAIN}`) && PathPrefix(`/mcp`)
+      # Primary MCP subdomain routing for cloud and development
+      - traefik.http.routers.mcp.rule=Host(`${MCP_HOST}`)
       - traefik.http.routers.mcp.entrypoints=websecure
       - traefik.http.routers.mcp.tls.certresolver=le
       - traefik.http.routers.mcp.priority=100
+      # CONDITIONAL: Fallback routing for development only (security-controlled)
+      # Only enabled when ENABLE_MCP_FALLBACK=true (dev), disabled for production
+      # Lower priority (30) ensures main gateway gets API requests first
+      - "traefik.http.routers.mcp-local.rule=${ENABLE_MCP_FALLBACK:+Host(`${API_HOST}`) && PathPrefix(`/mcp`)}"
+      - "traefik.http.routers.mcp-local.entrypoints=${ENABLE_MCP_FALLBACK:+websecure}"
+      - "traefik.http.routers.mcp-local.tls.certresolver=${ENABLE_MCP_FALLBACK:+le}"
+      - "traefik.http.routers.mcp-local.priority=${ENABLE_MCP_FALLBACK:+30}"
+      # Single service definition for both routes
       - traefik.http.services.mcp.loadbalancer.server.port=3005
 
   mcp-service:

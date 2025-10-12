@@ -1,12 +1,12 @@
 {
   "mcpServers": {
-    "_comment": "CLOUD VERSION (WORKING) - Use this for production cloud deployment",
+    "_comment": "CLOUD VERSION (WORKING) - Uses dedicated MCP subdomain for production security",
     "personal-context-router-cloud": {
       "command": "npx",
       "args": [
         "-y",
         "mcp-remote@0.1.18",
-        "https://api.hcp.loyalagents.org/mcp",
+        "https://mcp.hcp.loyalagents.org/mcp",
         "--mode", "duplex",
         "--header", "Authorization:Basic bG95YWwtYmlyZHM6YzAwbC1jQHRz"
       ]
