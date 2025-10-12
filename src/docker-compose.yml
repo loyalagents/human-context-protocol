@@ -138,7 +138,9 @@ services:
       dockerfile: packages/mcp-gateway/Dockerfile
     container_name: mcp-gateway
     restart: unless-stopped
-    # Exposed via Traefik at /mcp path
+    # Exposed via Traefik at /mcp path AND directly on port 3003 for local development
+    ports:
+      - "3003:3005"  # Direct access for local development (bypasses SSL issues)
     expose:
       - "3005"
     command: npm run start --workspace=@personal-context-router/mcp-gateway

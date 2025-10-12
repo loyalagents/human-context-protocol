@@ -13,13 +13,15 @@ This system allows Claude Desktop to:
 
 ## Architecture
 
-**6 interconnected NestJS services:**
+**7 interconnected NestJS services:**
 
-- **Gateway** (`packages/gateway`): API router with authentication, rate limiting and validation
+- **Gateway** (`packages/gateway`): Main API router with authentication, rate limiting and validation
+- **MCP Gateway** (`packages/mcp-gateway`): Dedicated gateway for MCP traffic with auth, rate limiting, and logging
 - **Auth Service** (`packages/auth-service`): Simple authentication for cloud deployment protection
 - **Preference Service** (`packages/preference-service`): MongoDB-backed preference storage (HTTP + TCP)
 - **GitHub Import Service** (`packages/github-import-service`): GitHub API integration via Octokit
 - **MCP Service** (`packages/mcp-service`): Claude integration via Model Context Protocol
+- **User Service** (`packages/user-service`): User account management and authentication
 - **Shared** (`packages/shared`): Common types, DTOs, and utilities
 
 ## Quick Start
@@ -47,8 +49,12 @@ Note: in this default configuration, containers run compiled code (no live reloa
 **Services will be available at:**
 - **Traefik Proxy**: https://localhost (HTTPS with SSL termination)
 - **Gateway**: https://localhost/api/* (all API calls via Traefik)
-- **MCP Service**: https://localhost/mcp (Claude integration via Traefik)
+- **MCP Gateway**:
+  - **Local Development**: http://localhost:3003/mcp (direct HTTP access)
+  - **Production**: https://localhost/mcp (via Traefik HTTPS)
 - **Swagger Docs**: https://localhost/api/docs (API documentation)
+
+> **Note**: MCP has dual access modes - local development uses direct HTTP port 3003 to avoid SSL certificate setup, while production uses HTTPS through Traefik.
 - **MongoDB**: localhost:27017 (database, not exposed externally)
 
 **Note**: All services are routed through Traefik reverse proxy with HTTPS. Direct service access is disabled for security. For cloud deployment, update `DOMAIN` and `LETSENCRYPT_EMAIL` environment variables.
