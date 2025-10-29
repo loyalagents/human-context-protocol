@@ -181,8 +181,35 @@ services:
       - PORT=3003
       - NODE_ENV=development
       - GATEWAY_URL=http://gateway:3000
+      - GRAPHQL_GATEWAY_URL=http://graphql-gateway:4000  # Phase 1: Will use GraphQL
+      - SERVICE_TOKEN=${SERVICE_TOKEN:-dev-service-token-change-in-production}
     depends_on:
       - gateway
+      - graphql-gateway  # Phase 1 dependency
+
+  # === INTERNAL: GRAPHQL GATEWAY (Phase 0+) ===
+  graphql-gateway:
+    build:
+      context: .
+      dockerfile: packages/graphql-gateway/Dockerfile
+    container_name: graphql-gateway
+    restart: unless-stopped
+    # Internal only - called by MCP Service and (future) REST Gateway
+    # NOT exposed externally for security - only accessible within Docker network
+    expose:
+      - "4000"
+    command: npm run start --workspace=@personal-context-router/graphql-gateway
+    environment:
+      - PORT=4000
+      - NODE_ENV=development
+      - REST_GATEWAY_URL=http://gateway:3000
+      - SERVICE_TOKEN=${SERVICE_TOKEN:-dev-service-token-change-in-production}
+    depends_on:
+      - gateway
+    labels:
+      - "com.personal-context-router.service=graphql-gateway"
+      - "com.personal-context-router.phase=phase-0"
+      - "com.personal-context-router.description=GraphQL Gateway wrapping REST (temporary)"
 
   github-import-service:
     build:

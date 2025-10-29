@@ -4,11 +4,10 @@ import express from 'express';
 import cors from 'cors';
 import * as dotenv from 'dotenv';
 
-import { GatewayClientService } from './services/gateway-client.service';
-import { PreferenceTools } from './tools/preference.tools';
+import { GraphQLTools } from './tools/graphql.tools';
 import { GitHubTools } from './tools/github.tools';
-import { UserTools } from './tools/user.tools';
-import { LocationTools } from './tools/location.tools';
+import { GatewayClientService } from './services/gateway-client.service';
+import { GraphQLClientService } from './services/graphql-client.service';
 
 // Load environment variables
 dotenv.config();
@@ -68,12 +67,11 @@ class MCPHttpServer {
           });
         }
 
-        // Create authenticated gateway client and tools for this request
+        // Create authenticated clients and tools for this request
         const gatewayClient = new GatewayClientService(authHeader);
-        const preferenceTools = new PreferenceTools(gatewayClient);
+        const graphqlClient = new GraphQLClientService(authHeader);
         const githubTools = new GitHubTools(gatewayClient);
-        const userTools = new UserTools(gatewayClient);
-        const locationTools = new LocationTools(gatewayClient);
+        const graphqlTools = new GraphQLTools(graphqlClient);
 
         let response;
 
@@ -84,10 +82,8 @@ class MCPHttpServer {
               id: jsonRpcRequest.id,
               result: {
                 tools: [
-                  ...preferenceTools.getTools(),
-                  ...githubTools.getTools(),
-                  ...userTools.getTools(),
-                  ...locationTools.getTools()
+                  ...graphqlTools.getTools(),
+                  ...githubTools.getTools()
                 ]
               }
             };
@@ -100,32 +96,30 @@ class MCPHttpServer {
               let result;
 
               // Route to appropriate tool handler based on tool name
-              // Check location tools first to avoid conflicts with user tools
-              if (name.includes('location') || name.startsWith('create_system_location') || name.startsWith('create_custom_location') ||
-                  name.startsWith('update_location') || name.startsWith('delete_location') || name.startsWith('mark_location') ||
-                  name.startsWith('get_available_system_locations') || name.startsWith('get_user_locations') ||
-                  name.includes('food_preference')) {
-                result = await locationTools.handleTool(name, args);
-              } else if (name.startsWith('get_github_') || name.startsWith('get_user_repos')) {
+              if (name.startsWith('get_github_') || name.startsWith('get_user_repos')) {
+                // GitHub tools still use REST Gateway
                 result = await githubTools.handleToolCall(name, args);
-              } else if (name.startsWith('create_user') || name.startsWith('get_user') || name.startsWith('update_user') ||
-                         name.startsWith('deactivate_user') || name.startsWith('list_users') || name.startsWith('record_user_login')) {
-                result = await userTools.handleToolCall(name, args);
+                response = {
+                  jsonrpc: '2.0',
+                  id: jsonRpcRequest.id,
+                  result: {
+                    content: [
+                      {
+                        type: 'text',
+                        text: JSON.stringify(result, null, 2)
+                      }
+                    ]
+                  }
+                };
               } else {
-                result = await preferenceTools.handleToolCall(name, args);
+                // All other tools use GraphQL
+                result = await graphqlTools.handleToolCall(name, args);
+                response = {
+                  jsonrpc: '2.0',
+                  id: jsonRpcRequest.id,
+                  result
+                };
               }
-              response = {
-                jsonrpc: '2.0',
-                id: jsonRpcRequest.id,
-                result: {
-                  content: [
-                    {
-                      type: 'text',
-                      text: JSON.stringify(result, null, 2)
-                    }
-                  ]
-                }
-              };
             } catch (error) {
               const errorMessage = error instanceof Error ? error.message : 'Unknown error';
               response = {

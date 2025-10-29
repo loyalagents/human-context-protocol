@@ -17,13 +17,20 @@ COPY tsconfig.json ./
 
 # Build the application
 RUN npm run build --workspace=@personal-context-router/shared
+
+# Remove any cached TypeScript build info that may have been copied
+RUN rm -f /app/packages/mcp-service/*.tsbuildinfo /app/packages/mcp-service/dist
+
+# Build MCP service with fresh compilation
 RUN npm run build --workspace=@personal-context-router/mcp-service
 
-# Clean up dev dependencies for smaller image
-RUN npm ci --omit=dev --workspaces --include-workspace-root
+# Verify build output exists
+RUN ls -la /app/packages/mcp-service/dist || (echo "❌ Build failed - dist directory not found" && exit 1)
+RUN test -f /app/packages/mcp-service/dist/main.js || (echo "❌ Build failed - main.js not found" && exit 1)
 
 # Expose MCP service port
 EXPOSE 3003
 
 # Start the application
-CMD ["npm", "run", "start", "--workspace=@personal-context-router/mcp-service"]
+WORKDIR /app/packages/mcp-service
+CMD ["npm", "start"]

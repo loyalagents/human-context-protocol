@@ -13,3 +13,5 @@ Make sure to always update:
 - All curl examples must include `-u admin:password123` for protected routes
 
 In addition the README.md contains information about making new services and updating files. Please make sure that information is correct and update it if that information is incorrect.
+
+Please also read GRAPHQL_MIGRATION_PLAN.md
