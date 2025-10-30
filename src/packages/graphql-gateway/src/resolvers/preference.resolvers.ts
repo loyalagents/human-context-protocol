@@ -1,7 +1,5 @@
-import axios from 'axios';
+import { Preference } from '../models';
 import { Context } from '../types';
-
-const REST_GATEWAY_URL = process.env.REST_GATEWAY_URL || 'http://localhost:3000';
 
 export const preferenceResolvers = {
   Query: {
@@ -11,14 +9,17 @@ export const preferenceResolvers = {
       context: Context
     ) => {
       try {
-        const params = category ? `?category=${category}` : '';
-        const response = await axios.get(
-          `${REST_GATEWAY_URL}/api/preferences/user/${userId}${params}`,
-          {
-            headers: context.authHeader ? { Authorization: context.authHeader } : {},
-          }
-        );
-        return response.data.data || response.data;
+        const query: any = { userId };
+        if (category) {
+          query.category = category;
+        }
+
+        const preferences = await Preference.find(query)
+          .sort({ createdAt: -1 })
+          .lean();
+
+        // Convert MongoDB _id to id for GraphQL
+        return preferences.map(pref => ({ ...pref, id: pref._id.toString() }));
       } catch (error) {
         console.error('Error fetching preferences:', error);
         throw new Error(`Failed to fetch preferences: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -31,13 +32,11 @@ export const preferenceResolvers = {
       context: Context
     ) => {
       try {
-        const response = await axios.get(
-          `${REST_GATEWAY_URL}/api/preferences/user/${userId}/${key}`,
-          {
-            headers: context.authHeader ? { Authorization: context.authHeader } : {},
-          }
-        );
-        return response.data.data || response.data;
+        const preference = await Preference.findOne({ userId, key }).lean();
+        if (!preference) {
+          return null;
+        }
+        return { ...preference, id: preference._id.toString() };
       } catch (error) {
         console.error('Error fetching preference:', error);
         return null;
@@ -57,20 +56,24 @@ export const preferenceResolvers = {
       context: Context
     ) => {
       try {
-        const response = await axios.post(
-          `${REST_GATEWAY_URL}/api/preferences`,
-          {
-            userId,
-            key,
-            value: data,
-            type: typeof data,
-            category,
-          },
-          {
-            headers: context.authHeader ? { Authorization: context.authHeader } : {},
-          }
-        );
-        return response.data.data || response.data;
+        // Check if preference already exists
+        const existing = await Preference.findOne({ userId, key });
+        if (existing) {
+          throw new Error(`Preference with key '${key}' already exists for this user. Use updatePreference instead.`);
+        }
+
+        // Create preference - now matching the actual schema!
+        // This FIXES the 400 error by using correct field names
+        const preference = await Preference.create({
+          userId,
+          key,
+          data,  // ✅ Using 'data' field, not 'value'!
+          category,
+          type: category, // Store category as type for backward compatibility
+        });
+
+        console.log(`✅ Created preference: ${key} for user ${userId}`);
+        return { ...preference.toObject(), id: preference._id.toString() };
       } catch (error) {
         console.error('Error creating preference:', error);
         throw new Error(`Failed to create preference: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -87,17 +90,18 @@ export const preferenceResolvers = {
       context: Context
     ) => {
       try {
-        const response = await axios.put(
-          `${REST_GATEWAY_URL}/api/preferences/user/${userId}/${key}`,
-          {
-            value: data,
-            type: typeof data,
-          },
-          {
-            headers: context.authHeader ? { Authorization: context.authHeader } : {},
-          }
+        const preference = await Preference.findOneAndUpdate(
+          { userId, key },
+          { data }, // ✅ Using 'data' field
+          { new: true } // Return updated document
         );
-        return response.data.data || response.data;
+
+        if (!preference) {
+          throw new Error(`Preference '${key}' not found for user ${userId}`);
+        }
+
+        console.log(`✅ Updated preference: ${key} for user ${userId}`);
+        return { ...preference.toObject(), id: preference._id.toString() };
       } catch (error) {
         console.error('Error updating preference:', error);
         throw new Error(`Failed to update preference: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -110,12 +114,13 @@ export const preferenceResolvers = {
       context: Context
     ) => {
       try {
-        await axios.delete(
-          `${REST_GATEWAY_URL}/api/preferences/user/${userId}/${key}`,
-          {
-            headers: context.authHeader ? { Authorization: context.authHeader } : {},
-          }
-        );
+        const result = await Preference.deleteOne({ userId, key });
+
+        if (result.deletedCount === 0) {
+          throw new Error(`Preference '${key}' not found for user ${userId}`);
+        }
+
+        console.log(`✅ Deleted preference: ${key} for user ${userId}`);
         return true;
       } catch (error) {
         console.error('Error deleting preference:', error);

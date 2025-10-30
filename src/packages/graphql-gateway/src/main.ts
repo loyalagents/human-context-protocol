@@ -5,6 +5,7 @@ import { startStandaloneServer } from '@apollo/server/standalone';
 import * as dotenv from 'dotenv';
 import { typeDefs } from './schema/typeDefs';
 import { resolvers } from './resolvers';
+import { connectDatabase } from './db/connection';
 
 // Load environment variables
 dotenv.config();
@@ -12,7 +13,14 @@ dotenv.config();
 async function startGateway() {
   console.log('🚀 Starting GraphQL Gateway...');
   console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 REST Gateway: ${process.env.REST_GATEWAY_URL || 'http://localhost:3000'}`);
+
+  // Connect to MongoDB first
+  try {
+    await connectDatabase();
+  } catch (error) {
+    console.error('❌ Failed to connect to database, exiting...');
+    process.exit(1);
+  }
 
   // Create Apollo Server
   const server = new ApolloServer({
@@ -44,7 +52,7 @@ async function startGateway() {
 
   console.log(`✅ GraphQL Gateway ready at ${url}`);
   console.log(`📖 Open ${url} in your browser to explore the schema (Apollo Sandbox)`);
-  console.log(`⚠️  NOTE: Currently wrapping REST Gateway (Phase 0 - temporary architecture)`);
+  console.log(`🔗 Phase 2: Using direct database access for queries and mutations`);
 }
 
 // Start the server

@@ -34,9 +34,9 @@ services:
     image: mongo:7
     container_name: mongodb
     restart: unless-stopped
-    # Do NOT publish Mongo publicly. If you need local access, use an SSH tunnel or bind 127.0.0.1:27017:27017.
-    # ports:
-    #   - "27017:27017"
+    # Expose to localhost for local development
+    ports:
+      - "127.0.0.1:27017:27017"
     volumes:
       - mongodb_data:/data/db
     environment:
@@ -187,14 +187,14 @@ services:
       - gateway
       - graphql-gateway  # Phase 1 dependency
 
-  # === INTERNAL: GRAPHQL GATEWAY (Phase 0+) ===
+  # === INTERNAL: GRAPHQL GATEWAY (Phase 2) ===
   graphql-gateway:
     build:
       context: .
       dockerfile: packages/graphql-gateway/Dockerfile
     container_name: graphql-gateway
     restart: unless-stopped
-    # Internal only - called by MCP Service and (future) REST Gateway
+    # Internal only - called by MCP Service
     # NOT exposed externally for security - only accessible within Docker network
     expose:
       - "4000"
@@ -202,14 +202,14 @@ services:
     environment:
       - PORT=4000
       - NODE_ENV=development
-      - REST_GATEWAY_URL=http://gateway:3000
+      - MONGO_URI=mongodb://mongodb:27017/personal-context
       - SERVICE_TOKEN=${SERVICE_TOKEN:-dev-service-token-change-in-production}
     depends_on:
-      - gateway
+      - mongodb
     labels:
       - "com.personal-context-router.service=graphql-gateway"
-      - "com.personal-context-router.phase=phase-0"
-      - "com.personal-context-router.description=GraphQL Gateway wrapping REST (temporary)"
+      - "com.personal-context-router.phase=phase-2"
+      - "com.personal-context-router.description=GraphQL Gateway with direct MongoDB access"
 
   github-import-service:
     build:

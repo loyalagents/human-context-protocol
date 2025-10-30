@@ -1,19 +1,16 @@
-import axios from 'axios';
+import { User, Preference } from '../models';
 import { Context } from '../types';
-
-const REST_GATEWAY_URL = process.env.REST_GATEWAY_URL || 'http://localhost:3000';
 
 export const userResolvers = {
   Query: {
     user: async (_: any, { id }: { id: string }, context: Context) => {
       try {
-        const response = await axios.get(
-          `${REST_GATEWAY_URL}/api/users/${id}`,
-          {
-            headers: context.authHeader ? { Authorization: context.authHeader } : {},
-          }
-        );
-        return response.data.data || response.data;
+        const user = await User.findById(id).lean();
+        if (!user) {
+          throw new Error(`User with id ${id} not found`);
+        }
+        // Convert MongoDB _id to id for GraphQL
+        return { ...user, id: user._id.toString() };
       } catch (error) {
         console.error('Error fetching user:', error);
         throw new Error(`Failed to fetch user: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -22,13 +19,11 @@ export const userResolvers = {
 
     userByEmail: async (_: any, { email }: { email: string }, context: Context) => {
       try {
-        const response = await axios.get(
-          `${REST_GATEWAY_URL}/api/users/by-email/${email}`,
-          {
-            headers: context.authHeader ? { Authorization: context.authHeader } : {},
-          }
-        );
-        return response.data.data || response.data;
+        const user = await User.findOne({ email: email.toLowerCase().trim() }).lean();
+        if (!user) {
+          throw new Error(`User with email ${email} not found`);
+        }
+        return { ...user, id: user._id.toString() };
       } catch (error) {
         console.error('Error fetching user by email:', error);
         throw new Error(`Failed to fetch user by email: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -37,14 +32,13 @@ export const userResolvers = {
 
     users: async (_: any, { isActive }: { isActive?: boolean }, context: Context) => {
       try {
-        const params = isActive !== undefined ? `?isActive=${isActive}` : '';
-        const response = await axios.get(
-          `${REST_GATEWAY_URL}/api/users${params}`,
-          {
-            headers: context.authHeader ? { Authorization: context.authHeader } : {},
-          }
-        );
-        return response.data.data || response.data;
+        const query = isActive !== undefined ? { isActive } : {};
+        const users = await User.find(query)
+          .sort({ createdAt: -1 })
+          .lean();
+
+        // Convert MongoDB _id to id for GraphQL
+        return users.map(user => ({ ...user, id: user._id.toString() }));
       } catch (error) {
         console.error('Error fetching users:', error);
         throw new Error(`Failed to fetch users: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -64,14 +58,30 @@ export const userResolvers = {
       context: Context
     ) => {
       try {
-        const response = await axios.post(
-          `${REST_GATEWAY_URL}/api/users`,
-          { email, firstName, lastName, isActive },
-          {
-            headers: context.authHeader ? { Authorization: context.authHeader } : {},
-          }
-        );
-        return response.data.data || response.data;
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          throw new Error('Invalid email format');
+        }
+
+        // Normalize email
+        const normalizedEmail = email.toLowerCase().trim();
+
+        // Check for duplicate
+        const existing = await User.findOne({ email: normalizedEmail });
+        if (existing) {
+          throw new Error(`User with email ${email} already exists`);
+        }
+
+        // Create user
+        const user = await User.create({
+          email: normalizedEmail,
+          firstName,
+          lastName,
+          isActive: isActive ?? true,
+        });
+
+        return { ...user.toObject(), id: user._id.toString() };
       } catch (error) {
         console.error('Error creating user:', error);
         throw new Error(`Failed to create user: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -89,14 +99,23 @@ export const userResolvers = {
       context: Context
     ) => {
       try {
-        const response = await axios.put(
-          `${REST_GATEWAY_URL}/api/users/${id}`,
-          { firstName, lastName, isActive },
-          {
-            headers: context.authHeader ? { Authorization: context.authHeader } : {},
-          }
+        // Build update object with only provided fields
+        const update: any = {};
+        if (firstName !== undefined) update.firstName = firstName;
+        if (lastName !== undefined) update.lastName = lastName;
+        if (isActive !== undefined) update.isActive = isActive;
+
+        const user = await User.findByIdAndUpdate(
+          id,
+          update,
+          { new: true } // Return updated document
         );
-        return response.data.data || response.data;
+
+        if (!user) {
+          throw new Error(`User with id ${id} not found`);
+        }
+
+        return { ...user.toObject(), id: user._id.toString() };
       } catch (error) {
         console.error('Error updating user:', error);
         throw new Error(`Failed to update user: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -105,14 +124,17 @@ export const userResolvers = {
 
     deactivateUser: async (_: any, { id }: { id: string }, context: Context) => {
       try {
-        const response = await axios.put(
-          `${REST_GATEWAY_URL}/api/users/${id}/deactivate`,
-          {},
-          {
-            headers: context.authHeader ? { Authorization: context.authHeader } : {},
-          }
+        const user = await User.findByIdAndUpdate(
+          id,
+          { isActive: false },
+          { new: true }
         );
-        return response.data.data || response.data;
+
+        if (!user) {
+          throw new Error(`User with id ${id} not found`);
+        }
+
+        return { ...user.toObject(), id: user._id.toString() };
       } catch (error) {
         console.error('Error deactivating user:', error);
         throw new Error(`Failed to deactivate user: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -121,14 +143,17 @@ export const userResolvers = {
 
     recordUserLogin: async (_: any, { id }: { id: string }, context: Context) => {
       try {
-        const response = await axios.put(
-          `${REST_GATEWAY_URL}/api/users/${id}/login`,
-          {},
-          {
-            headers: context.authHeader ? { Authorization: context.authHeader } : {},
-          }
+        const user = await User.findByIdAndUpdate(
+          id,
+          { lastLoginAt: new Date() },
+          { new: true }
         );
-        return response.data.data || response.data;
+
+        if (!user) {
+          throw new Error(`User with id ${id} not found`);
+        }
+
+        return { ...user.toObject(), id: user._id.toString() };
       } catch (error) {
         console.error('Error recording user login:', error);
         throw new Error(`Failed to record user login: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -137,12 +162,15 @@ export const userResolvers = {
 
     deleteUser: async (_: any, { id }: { id: string }, context: Context) => {
       try {
-        await axios.delete(
-          `${REST_GATEWAY_URL}/api/users/${id}`,
-          {
-            headers: context.authHeader ? { Authorization: context.authHeader } : {},
-          }
-        );
+        const result = await User.findByIdAndDelete(id);
+
+        if (!result) {
+          throw new Error(`User with id ${id} not found`);
+        }
+
+        // Also delete all user preferences
+        await Preference.deleteMany({ userId: id });
+
         return true;
       } catch (error) {
         console.error('Error deleting user:', error);
@@ -159,14 +187,17 @@ export const userResolvers = {
       context: Context
     ) => {
       try {
-        const params = category ? `&category=${category}` : '';
-        const response = await axios.get(
-          `${REST_GATEWAY_URL}/api/preferences/user/${user.id}${params}`,
-          {
-            headers: context.authHeader ? { Authorization: context.authHeader } : {},
-          }
-        );
-        return response.data.data || response.data;
+        const query: any = { userId: user.id };
+        if (category) {
+          query.category = category;
+        }
+
+        const preferences = await Preference.find(query)
+          .sort({ createdAt: -1 })
+          .lean();
+
+        // Convert MongoDB _id to id for GraphQL
+        return preferences.map(pref => ({ ...pref, id: pref._id.toString() }));
       } catch (error) {
         console.error('Error fetching user preferences:', error);
         return [];
@@ -179,14 +210,25 @@ export const userResolvers = {
       context: Context
     ) => {
       try {
-        const params = type ? `&type=${type}` : '';
-        const response = await axios.get(
-          `${REST_GATEWAY_URL}/api/locations?userId=${user.id}${params}`,
-          {
-            headers: context.authHeader ? { Authorization: context.authHeader } : {},
-          }
-        );
-        return response.data.data || response.data;
+        const query: any = {
+          userId: user.id,
+          type: 'location'
+        };
+
+        if (type) {
+          query['data.type'] = type;
+        }
+
+        const locations = await Preference.find(query)
+          .sort({ createdAt: -1 })
+          .lean();
+
+        // Transform preference format to location format
+        return locations.map(pref => ({
+          key: pref.key,
+          userId: pref.userId,
+          ...pref.data,
+        }));
       } catch (error) {
         console.error('Error fetching user locations:', error);
         return [];
