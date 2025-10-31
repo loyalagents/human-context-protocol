@@ -187,7 +187,7 @@ services:
       - gateway
       - graphql-gateway  # Phase 1 dependency
 
-  # === INTERNAL: GRAPHQL GATEWAY (Phase 2) ===
+  # === INTERNAL: GRAPHQL GATEWAY (Schema Stitching) ===
   graphql-gateway:
     build:
       context: .
@@ -202,14 +202,19 @@ services:
     environment:
       - PORT=4000
       - NODE_ENV=development
-      - MONGO_URI=mongodb://mongodb:27017/personal-context
       - SERVICE_TOKEN=${SERVICE_TOKEN:-dev-service-token-change-in-production}
+      # Service URLs for schema stitching
+      - USER_SERVICE_URL=http://user-service:3015
+      - PREFERENCE_SERVICE_URL=http://preference-service:3001
+      - REST_GATEWAY_URL=http://gateway:3000
     depends_on:
-      - mongodb
+      - user-service
+      - preference-service
+      - gateway
     labels:
       - "com.personal-context-router.service=graphql-gateway"
-      - "com.personal-context-router.phase=phase-2"
-      - "com.personal-context-router.description=GraphQL Gateway with direct MongoDB access"
+      - "com.personal-context-router.architecture=schema-stitching"
+      - "com.personal-context-router.description=GraphQL Gateway with delegated REST service calls"
 
   github-import-service:
     build:
