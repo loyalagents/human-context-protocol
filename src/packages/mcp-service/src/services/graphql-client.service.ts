@@ -93,6 +93,14 @@ export class GraphQLClientService {
                 type {
                   name
                   kind
+                  ofType {
+                    name
+                    kind
+                    ofType {
+                      name
+                      kind
+                    }
+                  }
                 }
               }
             }
@@ -107,6 +115,14 @@ export class GraphQLClientService {
                 type {
                   name
                   kind
+                  ofType {
+                    name
+                    kind
+                    ofType {
+                      name
+                      kind
+                    }
+                  }
                 }
               }
             }
@@ -121,6 +137,26 @@ export class GraphQLClientService {
               type {
                 name
                 kind
+                ofType {
+                  name
+                  kind
+                }
+              }
+            }
+            enumValues {
+              name
+              description
+            }
+            inputFields {
+              name
+              description
+              type {
+                name
+                kind
+                ofType {
+                  name
+                  kind
+                }
               }
             }
           }
