@@ -136,7 +136,13 @@ export const locationResolvers = {
             headers: context.authHeader ? { Authorization: context.authHeader } : {},
           }
         );
-        return response.data.data || response.data;
+        const location = response.data.data || response.data;
+        // Map locationKey to key for GraphQL schema compatibility
+        return {
+          ...location,
+          key: location.locationKey || location.key,
+          type: location.type || 'system',
+        };
       } catch (error) {
         console.error('Error creating system location:', error);
         throw new Error(`Failed to create system location: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -156,7 +162,13 @@ export const locationResolvers = {
             headers: context.authHeader ? { Authorization: context.authHeader } : {},
           }
         );
-        return response.data.data || response.data;
+        const location = response.data.data || response.data;
+        // Map locationKey to key for GraphQL schema compatibility
+        return {
+          ...location,
+          key: location.locationKey || location.key,
+          type: location.type || 'custom',
+        };
       } catch (error) {
         console.error('Error creating custom location:', error);
         throw new Error(`Failed to create custom location: ${error instanceof Error ? error.message : 'Unknown error'}`);

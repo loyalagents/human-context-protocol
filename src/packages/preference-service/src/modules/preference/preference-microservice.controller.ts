@@ -83,11 +83,11 @@ export class PreferenceMicroserviceController {
   }
 
   @MessagePattern('updateUserPreference')
-  async updateUserPreference(@Payload() data: { userId: string; key: string; value: any; type?: string }): Promise<ApiResponse<UserPreference>> {
+  async updateUserPreference(@Payload() data: { userId: string; key: string; data: any; type?: string }): Promise<ApiResponse<UserPreference>> {
     try {
       const userId = createUserId(data.userId);
       const updateDto: UpdatePreferenceDto = {
-        value: data.value,
+        data: data.data,
         type: data.type as any,
       };
       const preference = await this.preferenceService.updateUserPreference(userId, data.key, updateDto);
@@ -139,11 +139,11 @@ export class PreferenceMicroserviceController {
   }
 
   @MessagePattern('updatePreference')
-  async updatePreference(@Payload() data: { id: string; value: any; type?: string }): Promise<ApiResponse<UserPreference>> {
+  async updatePreference(@Payload() data: { id: string; data: any; type?: string }): Promise<ApiResponse<UserPreference>> {
     try {
       const preferenceId = createPreferenceId(data.id);
       const updateDto: UpdatePreferenceDto = {
-        value: data.value,
+        data: data.data,
         type: data.type as any,
       };
       const preference = await this.preferenceService.updatePreference(preferenceId, updateDto);

@@ -73,20 +73,69 @@ Example queries:
 This tool provides flexible access to modify user data, preferences, locations, and related information through GraphQL mutations.
 
 Available mutations include:
-- createUser(email, firstName, lastName, isActive): Create a new user
-- updateUser(id, firstName, lastName, isActive): Update user details
-- deactivateUser(id): Deactivate a user
-- deleteUser(id): Delete a user
-- createPreference(userId, key, data, category): Create preference
-- updatePreference(userId, key, data): Update preference
-- deletePreference(userId, key): Delete preference
-- addSystemLocation(userId, locationType): Add system location
-- addCustomLocation(userId, nickname, address, coordinates): Add custom location
-- updateLocationNickname(userId, key, nickname): Update location nickname
-- removeLocation(userId, key): Remove location
-- addFoodPreference(userId, name, category, ...): Add food preference
-- updateFoodPreference(locationKey, foodPreferenceKey, ...): Update food preference
-- removeFoodPreference(locationKey, foodPreferenceKey): Remove food preference
+
+USER MUTATIONS:
+- createUser(email: String!, firstName: String, lastName: String, isActive: Boolean): Create a new user
+- updateUser(id: ID!, firstName: String, lastName: String, isActive: Boolean): Update user details
+- deactivateUser(id: ID!): Deactivate a user
+- deleteUser(id: ID!): Delete a user
+- recordUserLogin(id: ID!): Record user login
+
+PREFERENCE MUTATIONS:
+- createPreference(userId: ID!, key: String!, data: JSON!, category: String): Create preference
+  * data is JSON type - can be any value (string, number, boolean, object, array)
+- updatePreference(userId: ID!, key: String!, data: JSON!): Update preference
+- deletePreference(userId: ID!, key: String!): Delete preference
+
+LOCATION MUTATIONS:
+- createSystemLocation(userId: ID!, locationType: SystemLocationType!, address: String!, coordinates: CoordinatesInput!, nickname: String, notes: String): Add system location (home, work, etc.)
+  * locationType: SystemLocationType enum (use WITHOUT quotes). Valid values:
+    - home (user's primary residence)
+    - work (user's workplace)
+    - gym (fitness/gym location)
+    - school (educational institution)
+  * nickname: Optional display name (defaults based on type if not provided)
+  * CRITICAL: Use enum values WITHOUT quotes, e.g., locationType: home NOT locationType: "home"
+  * Example: createSystemLocation(userId: "123", locationType: home, address: "123 Main St", coordinates: {lat: 40.7, lng: -74.0}, nickname: "My Home")
+
+- createCustomLocation(userId: ID!, locationName: String!, address: String!, coordinates: CoordinatesInput!, nickname: String!, category: LocationCategory!, features: [LocationFeature!]!, notes: String): Add custom location
+  * locationName: Unique identifier slug (e.g., "moms_house", "office_downtown")
+  * nickname: Display name shown to user (e.g., "Mom's House", "Downtown Office")
+  * category: LocationCategory enum (use WITHOUT quotes). Valid values:
+    - residence (residential locations)
+    - workplace (work-related locations)
+    - fitness (fitness/gym locations)
+    - education (educational locations)
+    - social (social/entertainment venues)
+    - travel (travel destinations)
+    - other (other location types)
+  * features: REQUIRED array with at least one LocationFeature enum value. Valid enum values (use WITHOUT quotes):
+    - food_preferences (location has food preference settings)
+    - delivery_support (location supports delivery)
+    - scheduling (location has scheduling features)
+    - budget_tracking (location has budget tracking)
+    - restaurant_favorites (location has restaurant favorites)
+    - quick_access (location is marked for quick access)
+  * CRITICAL: features cannot be empty! Must include at least one enum value
+  * CRITICAL: All enum values must be used WITHOUT quotes
+  * Example: createCustomLocation(userId: "123", locationName: "moms_house", address: "456 Oak Ave", coordinates: {lat: 40.7, lng: -74.0}, nickname: "Mom's House", category: residence, features: [food_preferences, delivery_support])
+
+- updateLocation(userId: ID!, locationKey: String!, address: String, coordinates: CoordinatesInput, nickname: String, notes: String): Update location
+- deleteLocation(userId: ID!, locationKey: String!): Remove location
+- markLocationAsUsed(userId: ID!, locationKey: String!): Mark location as recently used
+
+FOOD PREFERENCE MUTATIONS:
+- setDefaultFoodPreferences(userId: ID!, preferences: [FoodPreferenceInput!]!): Set default food preferences
+- updateDefaultFoodPreference(userId: ID!, category: String!, level: FoodPreferenceLevel!): Update single default preference
+- setLocationFoodPreferences(userId: ID!, locationKey: String!, preferences: [FoodPreferenceInput!]!): Set location-specific food preferences
+- updateLocationFoodPreference(userId: ID!, locationKey: String!, category: String!, level: FoodPreferenceLevel!): Update single location preference
+- deleteLocationFoodPreferences(userId: ID!, locationKey: String!): Remove all food preferences for a location
+
+ENUMS (all enum values must be used WITHOUT quotes):
+- SystemLocationType: home | work | gym | school
+- LocationCategory: residence | workplace | fitness | education | social | travel | other
+- LocationFeature: food_preferences | delivery_support | scheduling | budget_tracking | restaurant_favorites | quick_access
+- FoodPreferenceLevel: love | like | neutral | dislike | hate
 
 Example mutations:
 1. Create a new user:
@@ -106,16 +155,49 @@ mutation {
   }
 }
 
-3. Add a custom location:
+3. Add a system location (home):
 mutation {
-  addCustomLocation(
+  createSystemLocation(
     userId: "USER_ID"
-    nickname: "Home"
-    address: "123 Main St"
+    locationType: "home"
+    address: "123 Main St, City, State 12345"
     coordinates: { lat: 40.7128, lng: -74.0060 }
+    nickname: "My Home"
   ) {
     key
     nickname
+    address
+  }
+}
+
+4. Add a custom location with features (CORRECT - enum values without quotes):
+mutation {
+  createCustomLocation(
+    userId: "USER_ID"
+    locationName: "moms_house"
+    address: "456 Oak Ave, City, State 12345"
+    coordinates: { lat: 40.7128, lng: -74.0060 }
+    nickname: "Mom's House"
+    category: "residence"
+    features: [food_preferences, delivery_support]
+  ) {
+    key
+    nickname
+    address
+  }
+}
+
+5. Set food preferences:
+mutation {
+  setDefaultFoodPreferences(
+    userId: "USER_ID"
+    preferences: [
+      { category: "italian", level: love }
+      { category: "chinese", level: like }
+    ]
+  ) {
+    category
+    level
   }
 }`,
         inputSchema: {

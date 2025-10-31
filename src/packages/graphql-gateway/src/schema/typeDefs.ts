@@ -42,7 +42,7 @@ export const typeDefs = gql`
     coordinates: Coordinates!
     nickname: String
     category: String
-    features: [String!]
+    features: [LocationFeature!]
     notes: String
     data: JSON
   }
@@ -51,6 +51,35 @@ export const typeDefs = gql`
   type Coordinates {
     lat: Float!
     lng: Float!
+  }
+
+  # System location type enum
+  enum SystemLocationType {
+    home
+    work
+    gym
+    school
+  }
+
+  # Location category enum
+  enum LocationCategory {
+    residence
+    workplace
+    fitness
+    education
+    social
+    travel
+    other
+  }
+
+  # Location feature enum
+  enum LocationFeature {
+    food_preferences
+    delivery_support
+    scheduling
+    budget_tracking
+    restaurant_favorites
+    quick_access
   }
 
   # Food preference level enum
@@ -133,7 +162,7 @@ export const typeDefs = gql`
     # Location mutations
     createSystemLocation(
       userId: ID!
-      locationType: String!
+      locationType: SystemLocationType!
       address: String!
       coordinates: CoordinatesInput!
       nickname: String
@@ -146,8 +175,8 @@ export const typeDefs = gql`
       address: String!
       coordinates: CoordinatesInput!
       nickname: String!
-      category: String!
-      features: [String!]!
+      category: LocationCategory!
+      features: [LocationFeature!]!
       notes: String
     ): Location!
 

@@ -33,7 +33,7 @@ export class CreatePreferenceDto {
   key!: string;
 
   @ApiProperty({
-    description: 'The preference value (can be any type)',
+    description: 'The preference data (can be any type)',
     example: 'dark',
     oneOf: [
       { type: 'string', example: 'dark' },
@@ -44,20 +44,29 @@ export class CreatePreferenceDto {
     ]
   })
   @IsDefined()
-  value: any;
+  data: any;
 
-  @ApiProperty({
-    description: 'The type of the preference value',
+  @ApiPropertyOptional({
+    description: 'The type of the preference data (optional, can be inferred)',
     enum: PreferenceType,
     example: PreferenceType.STRING
   })
   @IsEnum(PreferenceType)
-  type!: PreferenceType;
+  @IsOptional()
+  type?: PreferenceType;
+
+  @ApiPropertyOptional({
+    description: 'Optional category for grouping preferences',
+    example: 'food'
+  })
+  @IsString()
+  @IsOptional()
+  category?: string;
 }
 
 export class UpdatePreferenceDto {
   @ApiProperty({
-    description: 'The preference value (can be any type)',
+    description: 'The preference data (can be any type)',
     example: 'dark',
     oneOf: [
       { type: 'string', example: 'dark' },
@@ -68,10 +77,10 @@ export class UpdatePreferenceDto {
     ]
   })
   @IsDefined()
-  value: any;
+  data: any;
 
   @ApiPropertyOptional({
-    description: 'The type of the preference value',
+    description: 'The type of the preference data',
     enum: PreferenceType,
     example: PreferenceType.STRING
   })
