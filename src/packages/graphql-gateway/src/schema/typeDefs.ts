@@ -82,6 +82,27 @@ export const typeDefs = gql`
     quick_access
   }
 
+  # Food category enum
+  enum FoodCategory {
+    italian
+    chinese
+    mexican
+    american
+    indian
+    japanese
+    thai
+    mediterranean
+    fast_food
+    healthy
+    vegetarian
+    vegan
+    pizza
+    seafood
+    bbq
+    coffee
+    dessert
+  }
+
   # Food preference level enum
   enum FoodPreferenceLevel {
     love
@@ -93,7 +114,7 @@ export const typeDefs = gql`
 
   # Food preference type
   type FoodPreference {
-    category: String!
+    category: FoodCategory!
     level: FoodPreferenceLevel!
   }
 
@@ -207,7 +228,7 @@ export const typeDefs = gql`
 
     updateDefaultFoodPreference(
       userId: ID!
-      category: String!
+      category: FoodCategory!
       level: FoodPreferenceLevel!
     ): [FoodPreference!]!
 
@@ -220,7 +241,7 @@ export const typeDefs = gql`
     updateLocationFoodPreference(
       userId: ID!
       locationKey: String!
-      category: String!
+      category: FoodCategory!
       level: FoodPreferenceLevel!
     ): [FoodPreference!]!
 
@@ -237,7 +258,7 @@ export const typeDefs = gql`
   }
 
   input FoodPreferenceInput {
-    category: String!
+    category: FoodCategory!
     level: FoodPreferenceLevel!
   }
 `;

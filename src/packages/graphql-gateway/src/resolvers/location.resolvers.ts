@@ -247,7 +247,8 @@ export const locationResolvers = {
             headers: context.authHeader ? { Authorization: context.authHeader } : {},
           }
         );
-        return response.data.data || response.data;
+        const data = response.data.data || response.data;
+        return data.preferences || data;
       } catch (error) {
         console.error('Error setting default food preferences:', error);
         throw new Error(`Failed to set default food preferences: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -267,7 +268,8 @@ export const locationResolvers = {
             headers: context.authHeader ? { Authorization: context.authHeader } : {},
           }
         );
-        return response.data.data || response.data;
+        const data = response.data.data || response.data;
+        return data.preferences || data;
       } catch (error) {
         console.error('Error updating default food preference:', error);
         throw new Error(`Failed to update default food preference: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -287,7 +289,8 @@ export const locationResolvers = {
             headers: context.authHeader ? { Authorization: context.authHeader } : {},
           }
         );
-        return response.data.data || response.data;
+        const data = response.data.data || response.data;
+        return data.preferences || data;
       } catch (error) {
         console.error('Error setting location food preferences:', error);
         throw new Error(`Failed to set location food preferences: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -307,7 +310,8 @@ export const locationResolvers = {
             headers: context.authHeader ? { Authorization: context.authHeader } : {},
           }
         );
-        return response.data.data || response.data;
+        const data = response.data.data || response.data;
+        return data.preferences || data;
       } catch (error) {
         console.error('Error updating location food preference:', error);
         throw new Error(`Failed to update location food preference: ${error instanceof Error ? error.message : 'Unknown error'}`);
