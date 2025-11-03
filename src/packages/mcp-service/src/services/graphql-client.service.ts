@@ -52,6 +52,14 @@ export class GraphQLClientService {
 
   /**
    * Execute a GraphQL query
+   *
+   * TODO: Add caching for introspection queries (__schema, __type)
+   * - Detect introspection queries by checking for __schema or __type
+   * - Cache by query string as key
+   * - TTL ~5 minutes (schema rarely changes during development)
+   * - Would reduce load on GraphQL gateway for repeated schema queries
+   * - Estimated implementation effort: 30-45 minutes
+   * - Benefits: Faster responses, reduced gateway load
    */
   async query(query: string, variables?: Record<string, any>): Promise<any> {
     try {
@@ -72,103 +80,6 @@ export class GraphQLClientService {
       return await client.request(mutation, variables);
     } catch (error) {
       console.error('GraphQL Mutation Error:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get the GraphQL schema via introspection
-   */
-  async getSchema(): Promise<any> {
-    const introspectionQuery = `
-      query IntrospectionQuery {
-        __schema {
-          queryType {
-            name
-            fields {
-              name
-              description
-              args {
-                name
-                type {
-                  name
-                  kind
-                  ofType {
-                    name
-                    kind
-                    ofType {
-                      name
-                      kind
-                    }
-                  }
-                }
-              }
-            }
-          }
-          mutationType {
-            name
-            fields {
-              name
-              description
-              args {
-                name
-                type {
-                  name
-                  kind
-                  ofType {
-                    name
-                    kind
-                    ofType {
-                      name
-                      kind
-                    }
-                  }
-                }
-              }
-            }
-          }
-          types {
-            name
-            kind
-            description
-            fields {
-              name
-              description
-              type {
-                name
-                kind
-                ofType {
-                  name
-                  kind
-                }
-              }
-            }
-            enumValues {
-              name
-              description
-            }
-            inputFields {
-              name
-              description
-              type {
-                name
-                kind
-                ofType {
-                  name
-                  kind
-                }
-              }
-            }
-          }
-        }
-      }
-    `;
-
-    try {
-      const client = await this.ensureClient();
-      return await client.request(introspectionQuery);
-    } catch (error) {
-      console.error('GraphQL Schema Introspection Error:', error);
       throw error;
     }
   }
