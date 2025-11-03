@@ -27,8 +27,9 @@ export class PreferenceService {
       id: createPreferenceId(doc._id.toString()), // Convert ObjectId to string, then to branded type
       userId: createUserId(doc.userId), // doc.userId is stored as string in MongoDB
       key: doc.key,
-      value: doc.data?.value || doc.data, // Support both new and legacy format
-      type: doc.data?.type || PreferenceType.OBJECT,
+      data: doc.data, // Now using data directly
+      type: doc.type as PreferenceType | undefined,
+      category: doc.category,
       createdAt: doc.createdAt?.toISOString() || new Date().toISOString(),
       updatedAt: doc.updatedAt?.toISOString() || new Date().toISOString(),
     };
@@ -53,19 +54,27 @@ export class PreferenceService {
       throw new ConflictException('Preference already exists for this user and key');
     }
 
-    // Store the entire value + metadata as flexible data
-    const data = {
-      value: createPreferenceDto.value,
-      type: createPreferenceDto.type,
-    };
+    // Infer type if not provided
+    const inferredType = createPreferenceDto.type || this.inferType(createPreferenceDto.data);
 
     const doc = await this.preferenceRepository.create(
       userId,
       createPreferenceDto.key,
-      data
+      createPreferenceDto.data,
+      undefined, // locationKey
+      createPreferenceDto.category,
+      inferredType
     );
 
     return this.toUserPreference(doc);
+  }
+
+  private inferType(data: any): PreferenceType {
+    if (typeof data === 'string') return PreferenceType.STRING;
+    if (typeof data === 'number') return PreferenceType.NUMBER;
+    if (typeof data === 'boolean') return PreferenceType.BOOLEAN;
+    if (Array.isArray(data)) return PreferenceType.ARRAY;
+    return PreferenceType.OBJECT;
   }
 
   async getPreference(id: PreferenceId): Promise<UserPreference> {
@@ -112,12 +121,7 @@ export class PreferenceService {
   async updatePreference(id: PreferenceId, updatePreferenceDto: UpdatePreferenceDto): Promise<UserPreference> {
     this.logger.info('Updating preference', { id });
 
-    const data = {
-      value: updatePreferenceDto.value,
-      type: updatePreferenceDto.type,
-    };
-
-    const doc = await this.preferenceRepository.updateById(id, data);
+    const doc = await this.preferenceRepository.updateById(id, updatePreferenceDto.data);
 
     if (!doc) {
       throw new NotFoundException('Preference not found');
@@ -133,12 +137,7 @@ export class PreferenceService {
   ): Promise<UserPreference> {
     this.logger.info('Updating user preference', { userId, key });
 
-    const data = {
-      value: updatePreferenceDto.value,
-      type: updatePreferenceDto.type,
-    };
-
-    const doc = await this.preferenceRepository.updateByUserIdAndKey(userId, key, data);
+    const doc = await this.preferenceRepository.updateByUserIdAndKey(userId, key, updatePreferenceDto.data);
 
     if (!doc) {
       throw new NotFoundException('Preference not found');

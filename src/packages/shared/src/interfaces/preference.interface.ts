@@ -6,8 +6,9 @@ export interface UserPreference {
   id: PreferenceId;
   userId: UserId;
   key: string;
-  value: any;
-  type: PreferenceType;
+  data: any;
+  type?: PreferenceType;
+  category?: string;
   createdAt: string;
   updatedAt: string;
 }

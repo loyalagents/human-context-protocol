@@ -34,9 +34,9 @@ services:
     image: mongo:7
     container_name: mongodb
     restart: unless-stopped
-    # Do NOT publish Mongo publicly. If you need local access, use an SSH tunnel or bind 127.0.0.1:27017:27017.
-    # ports:
-    #   - "27017:27017"
+    # Expose to localhost for local development
+    ports:
+      - "127.0.0.1:27017:27017"
     volumes:
       - mongodb_data:/data/db
     environment:
@@ -181,8 +181,40 @@ services:
       - PORT=3003
       - NODE_ENV=development
       - GATEWAY_URL=http://gateway:3000
+      - GRAPHQL_GATEWAY_URL=http://graphql-gateway:4000  # Phase 1: Will use GraphQL
+      - SERVICE_TOKEN=${SERVICE_TOKEN:-dev-service-token-change-in-production}
     depends_on:
       - gateway
+      - graphql-gateway  # Phase 1 dependency
+
+  # === INTERNAL: GRAPHQL GATEWAY (Schema Stitching) ===
+  graphql-gateway:
+    build:
+      context: .
+      dockerfile: packages/graphql-gateway/Dockerfile
+    container_name: graphql-gateway
+    restart: unless-stopped
+    # Internal only - called by MCP Service
+    # NOT exposed externally for security - only accessible within Docker network
+    expose:
+      - "4000"
+    command: npm run start --workspace=@personal-context-router/graphql-gateway
+    environment:
+      - PORT=4000
+      - NODE_ENV=development
+      - SERVICE_TOKEN=${SERVICE_TOKEN:-dev-service-token-change-in-production}
+      # Service URLs for schema stitching
+      - USER_SERVICE_URL=http://user-service:3015
+      - PREFERENCE_SERVICE_URL=http://preference-service:3001
+      - REST_GATEWAY_URL=http://gateway:3000
+    depends_on:
+      - user-service
+      - preference-service
+      - gateway
+    labels:
+      - "com.personal-context-router.service=graphql-gateway"
+      - "com.personal-context-router.architecture=schema-stitching"
+      - "com.personal-context-router.description=GraphQL Gateway with delegated REST service calls"
 
   github-import-service:
     build:

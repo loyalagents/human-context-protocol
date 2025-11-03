@@ -5,12 +5,13 @@ export const PreferenceTypeSchema = z.enum(['string', 'number', 'boolean', 'obje
 export const CreatePreferenceSchema = z.object({
   userId: z.string().min(1),
   key: z.string().min(1),
-  value: z.unknown(),
-  type: PreferenceTypeSchema
+  data: z.unknown(),
+  type: PreferenceTypeSchema.optional(),
+  category: z.string().optional()
 });
 
 export const UpdatePreferenceSchema = z.object({
-  value: z.unknown(),
+  data: z.unknown(),
   type: PreferenceTypeSchema.optional()
 });
 

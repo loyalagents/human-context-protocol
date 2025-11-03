@@ -1,0 +1,28 @@
+{
+  "name": "@personal-context-router/graphql-gateway",
+  "version": "1.0.0",
+  "description": "GraphQL Gateway for federated services",
+  "main": "dist/main.js",
+  "scripts": {
+    "dev": "ts-node src/main.ts",
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "watch": "ts-node-dev --respawn src/main.ts"
+  },
+  "dependencies": {
+    "@apollo/server": "^4.10.0",
+    "axios": "^1.6.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "graphql": "^16.8.1",
+    "graphql-tag": "^2.12.6",
+    "graphql-type-json": "^0.3.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/node": "^20.11.0",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.3"
+  }
+}
